@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+couchish/__init__.py
+couchish.egg-info/PKG-INFO
+couchish.egg-info/SOURCES.txt
+couchish.egg-info/dependency_links.txt
+couchish.egg-info/entry_points.txt
+couchish.egg-info/not-zip-safe
+couchish.egg-info/top_level.txt
