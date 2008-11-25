@@ -3,12 +3,13 @@ import logging as log
 
 from couchdb import design
 from couchdb.client import ResourceConflict
-from pollen import jsonutil
 import formish
 from formish.dottedDict import dottedDict
 from formish import widgets
 
 import copy
+
+import jsonutil
 
 def get_files(data,filehandler):
     dd = dottedDict(data)
@@ -152,3 +153,7 @@ class FileAccessor(object):
         """
         item_id, attribute = id.split('/')
         return self.db.get_attachment(item_id,attribute)
+
+
+
+
