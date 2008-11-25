@@ -146,8 +146,6 @@ class FileAccessor(object):
         item_id, attribute = id.split('/')
         return None
 
-
-
     def get_file(self, id):
         """
         Get the file object for this id
