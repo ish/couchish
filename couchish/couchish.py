@@ -5,27 +5,37 @@ from couchdb import design
 from couchdb.client import ResourceConflict
 import formish
 from formish.dottedDict import dottedDict
-from formish import widgets
+from formish.file import File
 
 import copy
 
-import jsonutil
+from pollen import jsonutil
+
+def file_to_dict(obj):
+    return {'filename': obj.filename,'mimetype': obj.mimetype}
+
+def file_from_dict(obj):
+    return File(None, obj['filename'], obj['mimetype'])
+
+jsonutil.default_system.register_type(File, file_to_dict, file_from_dict, "file")
+jsonutil.decode_mapping['file'] = file_from_dict
+jsonutil.encode_mapping[File] = ('file',file_to_dict)
 
 def get_files(data,filehandler):
     dd = dottedDict(data)
     files = dottedDict()
     for k in dd.dottedkeys():
-        if isinstance(dd[k],widgets.File):
+        if isinstance(dd[k],File):
             files[k] = dd[k]
             filename = dd[k].filename
-            dd[k] = widgets.File(None,filename,filehandler.get_mimetype(filename))
+            dd[k] = File(None,filename,filehandler.get_mimetype(filename))
     return dd.data, files.data
 
 def add_id_and_attr_to_files(data,id):
     dd = dottedDict(data)
     files = dottedDict()
     for k in dd.dottedkeys():
-        if isinstance(dd[k],widgets.File):
+        if isinstance(dd[k],File):
             dd[k].id = id
             dd[k].attr = k
 
