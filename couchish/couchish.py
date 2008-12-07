@@ -92,7 +92,7 @@ class CouchishDB(object):
         self.notify(type, oldD, D)
         
     def set_key(self, type, id, key, value):
-        D = self.get(type, id)
+        D = self.get(id)
         oldD = copy.copy(D)
         D[key] = value
         self.db[id] = D
