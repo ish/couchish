@@ -5,7 +5,8 @@ from couchdb import design
 from couchdb.client import ResourceConflict
 import formish
 from formish.dottedDict import dottedDict
-from formish.file import File
+from schemaish.type import File
+from formish.filehandler import TempFileHandlerWeb
 
 import copy
 
@@ -42,21 +43,17 @@ def add_id_and_attr_to_files(data,id):
     return dd.data
 
 
-
 class CouchishDB(object):
     
-    def __init__(self, request):
-        self.request = request
-        self.db = request.environ['service.couchdb']
-        self.relationships = request.environ['service.relationships']        
+    def __init__(self, db, relationships = {}, filehandler=TempFileHandlerWeb()):
+        self.db = db
+        self.relationships = relationships
+        self.filehandler = filehandler
         
-    def form(self, type):
-        return self.request.environ['service.model_forms'][type]()
-    
     def get_all(self, type):
         return [add_id_and_attr_to_files(jsonutil.decode_from_dict(item['value']),item['id']) for item in self.db.view('%s/all'%type)]
 
-    def get(self, type, key):
+    def get(self, key):
         data = jsonutil.decode_from_dict(self.db[key])
         data = add_id_and_attr_to_files(data,key)
         return data
@@ -64,14 +61,13 @@ class CouchishDB(object):
     def get_attachment(self, key, name):
         return self.db.get_attachment(key, name)
 
-    def create(self, type, data,
-               filehandler=formish.filehandler.TempFileHandler()):
+    def create(self, type, data):
         log.debug('creating document type %s with data %s'%(type, data))
         data['model_type'] = type
-        data, files = get_files(data, filehandler)
+        data, files = get_files(data, self.filehandler)
         doc_id = self.db.create(jsonutil.encode_to_dict(dict(data)))
         if len(files.keys()) == 0:
-            return
+            return doc_id
         doc = self.db[doc_id]
         log.debug('detected %s files: %s'%(len(files.keys()),files))
         for key, f in files.items():
@@ -80,10 +76,10 @@ class CouchishDB(object):
 
 
     
-    def set(self, type, data, filehandler=formish.filehandler.TempFileHandler()):
+    def set(self, type, data):
         doc_id = data['_id']
         D = self.db[doc_id]
-        newD, files = get_files(data, filehandler)
+        newD, files = get_files(data, self.filehandler)
         newD = jsonutil.encode_to_dict(newD)
         if D['_rev'] != data['_rev']:
             raise ResourceConflict('Revision mismatch - the document was changed before this save')
