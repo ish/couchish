@@ -1,4 +1,5 @@
 import unittest
+from couchdb.design import ViewDefinition
 import couchdb
 from couchish import couchish
 import datetime
@@ -7,28 +8,35 @@ import schemaish
 
 
 DATADIR = 'couchish/tests/unittests/data/%s'
+
 relationships = {
-    'leader': {
-        'surname': [
-            ('tour', 'leader', 'leader/name'),
-            ('tour', 'assistant', 'leader/name')
+    'author': {
+        'name': [
+            ('book', 'author', 'author/name'),
           ], 
-        'firstname': [
-            ('tour', 'leader', 'leader/name'),
-            ('tour', 'assistant', 'leader/name')
-        ]
     }
 }
 
-leader_views= {
-    'all': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc) }",
-    'name': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc.surname+', '+doc.firstname) }"
+
+#leader_views= {
+#    'all': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc) }",
+#    'name': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc.surname+', '+doc.firstname) }"
+#  }
+
+#tour_views = {
+#    'all': "function(doc) { if (doc.model_type == 'tour')  emit(null, null) }",
+#    'byleader': "function(doc) { if (doc.model_type == 'tour')  emit(doc.leader[0],doc._id) }",
+#    'byassistant': "function(doc) { if (doc.model_type == 'tour')  emit(doc.assistant[0],doc._id) }"
+#  }
+
+author_views= {
+    'all': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc) }",
+    'name': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc.name) }"
   }
 
-tour_views = {
-    'all': "function(doc) { if (doc.model_type == 'tour')  emit(null, null) }",
-    'byleader': "function(doc) { if (doc.model_type == 'tour')  emit(doc.leader[0],doc._id) }",
-    'byassistant': "function(doc) { if (doc.model_type == 'tour')  emit(doc.assistant[0],doc._id) }"
+book_views = {
+    'all': "function(doc) { if (doc.model_type == 'book')  emit(null, null) }",
+    'byauthor': "function(doc) { if (doc.model_type == 'book')  emit(doc.author[0],doc._id) }",
   }
 
 def init_views(db, model_type, views):
@@ -44,14 +52,18 @@ class TestFileHandler():
     def get_mimetype(self, filename):
         return magic.from_file(DATADIR%filename,mime=True)
 
-class TestCouchish(unittest.TestCase):
+class TestCase(unittest.TestCase):
 
     def setUp(self):
-        dbname = 'test'
-        server = couchdb.Server('http://localhost:5984')
-        del server[dbname]
-        db = server.create(dbname)
-        self.db = couchish.CouchishDB(db,filehandler=TestFileHandler())
+        self.dbname = 'test'
+        self.server = couchdb.Server('http://localhost:5984')
+        if self.dbname in self.server:
+            del self.server[self.dbname]
+        self.DB = self.server.create(self.dbname)
+        self.db = couchish.CouchishDB(self.DB,filehandler=TestFileHandler())
+
+
+class TestData(TestCase):
 
     def test_simpledata(self):
         data = {'string': 'hello', 'integer': 7, 'float': 12.5}
@@ -145,7 +157,36 @@ class TestCouchish(unittest.TestCase):
         
        
 
+class TestRelationships(TestCase):
+
+    def init_views(self, db, model_type, views):
+        for name, view in views.items():
+            view = ViewDefinition(model_type, name, view)
+        view.sync(db)
+
+    def setUp(self):
+        TestCase.setUp(self)
+        self.db = couchish.CouchishDB(self.DB,relationships=relationships,filehandler=TestFileHandler())
+        self.init_views(self.DB, 'book', book_views)
+        self.init_views(self.DB, 'author', author_views)
+
+
+    def test_simpledata(self):
+        author1 = {'name': 'Tim Parkin'}
+        author1_id = self.db.create('author',author1)
+        book1 = {'title': 'MyBookOne','author': [author1_id, author1['name']]}
+        book1_id = self.db.create('book',book1)
+        author2 = {'name': 'Matt Goodall'}
+        author2_id = self.db.create('author',author2)
+        book2 = {'title': 'MyBookTwo','author': [author2_id, author2['name']]}
+        book2_id = self.db.create('book',book2)
+
+        author1 = self.db.get(author1_id)
+        author1['name'] = 'Denzil Washington'
+        self.db.set('author',author1)
+        book1 = self.db.get(book1_id)
+        print book1, author1
+        self.assertEquals(book1['author'], [author1_id, author1['name']])
         
-        
-        
-        
+
+
