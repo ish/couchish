@@ -9,13 +9,6 @@ import schemaish
 
 DATADIR = 'couchish/tests/unittests/data/%s'
 
-relationships = {
-    'author': {
-        'name': [
-            ('book', 'author', 'author/name'),
-          ], 
-    }
-}
 
 
 #leader_views= {
@@ -157,7 +150,25 @@ class TestData(TestCase):
         
        
 
-class TestRelationships(TestCase):
+class TestSimpleRelationships(TestCase):
+
+    relationships = {
+        'author': {
+            'name': [
+                ('book', 'author', 'author/name'),
+              ], 
+        }
+    }
+
+    author_views= {
+        'all': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc) }",
+        'name': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc.name) }"
+      }
+
+    book_views = {
+        'all': "function(doc) { if (doc.model_type == 'book')  emit(null, null) }",
+        'byauthor': "function(doc) { if (doc.model_type == 'book')  emit(doc.author[0],doc._id) }",
+      }
 
     def init_views(self, db, model_type, views):
         for name, view in views.items():
@@ -166,9 +177,9 @@ class TestRelationships(TestCase):
 
     def setUp(self):
         TestCase.setUp(self)
-        self.db = couchish.CouchishDB(self.DB,relationships=relationships,filehandler=TestFileHandler())
-        self.init_views(self.DB, 'book', book_views)
-        self.init_views(self.DB, 'author', author_views)
+        self.db = couchish.CouchishDB(self.DB,relationships=self.relationships,filehandler=TestFileHandler())
+        self.init_views(self.DB, 'book', self.book_views)
+        self.init_views(self.DB, 'author', self.author_views)
 
 
     def test_simpledata(self):
@@ -187,6 +198,59 @@ class TestRelationships(TestCase):
         book1 = self.db.get(book1_id)
         print book1, author1
         self.assertEquals(book1['author'], [author1_id, author1['name']])
+        
+
+
+class TestComplexRelationships(TestCase):
+
+    leader_views= {
+        'all': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc) }",
+        'name': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc.surname+', '+doc.firstname) }"
+      }
+
+    tour_views = {
+        'all': "function(doc) { if (doc.model_type == 'tour')  emit(null, null) }",
+        'byleader': "function(doc) { if (doc.model_type == 'tour')  emit(doc.leader[0],doc._id) }",
+      }
+    relationships = {
+        'leader': {
+            'surname': [
+                ('tour', 'leader', 'leader/name'),
+            ],
+            'firstname': [
+                ('tour', 'leader', 'leader/name'),
+            ]
+        }
+    }
+
+    def init_views(self, db, model_type, views):
+        for name, view in views.items():
+            view = ViewDefinition(model_type, name, view)
+        view.sync(db)
+
+    def setUp(self):
+        TestCase.setUp(self)
+        self.db = couchish.CouchishDB(self.DB,relationships=self.relationships,filehandler=TestFileHandler())
+        self.init_views(self.DB, 'leader', self.leader_views)
+        self.init_views(self.DB, 'tour', self.tour_views)
+
+
+    def test_simpledata(self):
+        leader1 = {'firstname': 'Tim', 'surname': 'Parkin'}
+        leader1_id = self.db.create('leader',leader1)
+        tour1 = {'title': 'MyTourOne','leader': [leader1_id, leader1['surname']+', '+leader1['firstname']]}
+        tour1_id = self.db.create('tour',tour1)
+        leader2 = {'firstname': 'Matt', 'surname': 'Goodall'}
+        leader2_id = self.db.create('leader',leader2)
+        tour2 = {'title': 'MyTourTwo','leader': [leader2_id, leader2['surname']+', '+leader2['firstname']]}
+        tour2_id = self.db.create('tour',tour2)
+
+        leader1 = self.db.get(leader1_id)
+        leader1['surname'] = 'Washington'
+        self.db.set('leader',leader1)
+        tour1 = self.db.get(tour1_id)
+        print tour1, leader1
+        self.assertEquals(tour1['leader'], [leader1_id, leader1['surname']+', '+leader1['firstname']])
         
 
 
