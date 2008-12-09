@@ -1,16 +1,17 @@
 import os, cgi
 import logging as log
+import copy
 
-from couchdb import design
-from couchdb.client import ResourceConflict
+from pollen import jsonutil
+
 import formish
 from formish.dottedDict import dottedDict
 from schemaish.type import File
 from formish.filehandler import TempFileHandlerWeb
 
-import copy
+from couchdb import design
+from couchdb.client import ResourceConflict
 
-from pollen import jsonutil
 
 def file_to_dict(obj):
     return {'filename': obj.filename,'mimetype': obj.mimetype}
@@ -58,8 +59,10 @@ class CouchishDB(object):
         data = add_id_and_attr_to_files(data,key)
         return data
 
+
     def get_attachment(self, key, name):
         return self.db.get_attachment(key, name)
+
 
     def create(self, type, data):
         log.debug('creating document type %s with data %s'%(type, data))
@@ -73,7 +76,6 @@ class CouchishDB(object):
         for key, f in files.items():
             self.db.put_attachment(doc, f.file.read(), key)
         return doc_id
-
 
     
     def set(self, type, data):
@@ -90,21 +92,24 @@ class CouchishDB(object):
             self.db.delete_attachment(D, key)
             self.db.put_attachment(D, f.file.read(), key)
         self.notify(type, oldD, D)
-        
+  
+
     def set_key(self, type, id, key, value):
         D = self.get(id)
         oldD = copy.copy(D)
         D[key] = value
         self.db[id] = D
         self.notify(type, oldD, D)
-        
+ 
+
     def delete(self, id):
         del self.db[id]
       
 
     def view(self, view, **kw):
         return [jsonutil.decode_from_dict(item['value']) for item in self.db.view(view, **kw)]
-        
+ 
+
     def notify(self, type, old, new):
         id = old['_id']
         changes = []
@@ -149,9 +154,11 @@ class FileAccessor(object):
         item_id, attribute = id.split('/')
         return self.db.get(item_id)[attribute].mimetype
 
+
     def get_mtime(self, id):
         item_id, attribute = id.split('/')
         return None
+
 
     def get_file(self, id):
         """

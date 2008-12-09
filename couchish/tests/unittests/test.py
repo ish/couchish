@@ -10,32 +10,12 @@ import schemaish
 DATADIR = 'couchish/tests/unittests/data/%s'
 
 
-
-#leader_views= {
-#    'all': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc) }",
-#    'name': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc.surname+', '+doc.firstname) }"
-#  }
-
-#tour_views = {
-#    'all': "function(doc) { if (doc.model_type == 'tour')  emit(null, null) }",
-#    'byleader': "function(doc) { if (doc.model_type == 'tour')  emit(doc.leader[0],doc._id) }",
-#    'byassistant': "function(doc) { if (doc.model_type == 'tour')  emit(doc.assistant[0],doc._id) }"
-#  }
-
-author_views= {
-    'all': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc) }",
-    'name': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc.name) }"
-  }
-
-book_views = {
-    'all': "function(doc) { if (doc.model_type == 'book')  emit(null, null) }",
-    'byauthor': "function(doc) { if (doc.model_type == 'book')  emit(doc.author[0],doc._id) }",
-  }
-
 def init_views(db, model_type, views):
     for name, view in views.items():
         view = ViewDefinition(model_type, name, view)
     view.sync(db)
+
+
 
 class TestFileHandler():
 
@@ -44,6 +24,8 @@ class TestFileHandler():
 
     def get_mimetype(self, filename):
         return magic.from_file(DATADIR%filename,mime=True)
+
+
 
 class TestCase(unittest.TestCase):
 
@@ -57,6 +39,7 @@ class TestCase(unittest.TestCase):
 
 
 class TestData(TestCase):
+
 
     def test_simpledata(self):
         data = {'string': 'hello', 'integer': 7, 'float': 12.5}
@@ -84,6 +67,7 @@ class TestData(TestCase):
         del out['_rev']
         self.assertEquals(data, out)
 
+
     def test_datetime(self):
         data = {'date': datetime.date(2008,12,18)}
         doc_id = self.db.create('date', data)
@@ -91,7 +75,8 @@ class TestData(TestCase):
         del out['_id']
         del out['_rev']
         self.assertEquals(data, out)
-        
+
+
     def test_file(self):
         myfile = schemaish.type.File(open(DATADIR%'test.jpg'),'test.jpg',magic.from_file(DATADIR%'test.jpg'))
         data = {'file': myfile}
@@ -101,6 +86,7 @@ class TestData(TestCase):
         self.assertEquals(data['file'].filename, out['file'].filename)
         self.assertEquals(data['file'].mimetype, out['file'].mimetype)
         self.assertEquals(open(DATADIR%'test.jpg').read(), f)
+
 
     def test_alterdoc(self):
         data = {'string': 'hello', 'integer': 7, 'float': 12.5}
@@ -118,6 +104,7 @@ class TestData(TestCase):
         del out['_rev']
         self.assertEquals(changed_out, out)
 
+
     def test_deletedoc(self):
         data = {'string': 'hello', 'integer': 7, 'float': 12.5}
         doc_id = self.db.create('simple', data)
@@ -127,6 +114,7 @@ class TestData(TestCase):
         self.assertEquals(data, out)
         self.db.delete(doc_id)
         self.assertRaises(couchdb.ResourceNotFound,self.db.get,doc_id)
+
 
     def test_alterfile(self):
         myfile = schemaish.type.File(open(DATADIR%'test.jpg'),'test.jpg',magic.from_file(DATADIR%'test.jpg'))
@@ -170,10 +158,12 @@ class TestSimpleRelationships(TestCase):
         'byauthor': "function(doc) { if (doc.model_type == 'book')  emit(doc.author[0],doc._id) }",
       }
 
+
     def init_views(self, db, model_type, views):
         for name, view in views.items():
             view = ViewDefinition(model_type, name, view)
         view.sync(db)
+
 
     def setUp(self):
         TestCase.setUp(self)
@@ -196,7 +186,6 @@ class TestSimpleRelationships(TestCase):
         author1['name'] = 'Denzil Washington'
         self.db.set('author',author1)
         book1 = self.db.get(book1_id)
-        print book1, author1
         self.assertEquals(book1['author'], [author1_id, author1['name']])
         
 
@@ -223,10 +212,12 @@ class TestComplexRelationships(TestCase):
         }
     }
 
+
     def init_views(self, db, model_type, views):
         for name, view in views.items():
             view = ViewDefinition(model_type, name, view)
         view.sync(db)
+
 
     def setUp(self):
         TestCase.setUp(self)
@@ -235,7 +226,7 @@ class TestComplexRelationships(TestCase):
         self.init_views(self.DB, 'tour', self.tour_views)
 
 
-    def test_simpledata(self):
+    def test_complexjoin(self):
         leader1 = {'firstname': 'Tim', 'surname': 'Parkin'}
         leader1_id = self.db.create('leader',leader1)
         tour1 = {'title': 'MyTourOne','leader': [leader1_id, leader1['surname']+', '+leader1['firstname']]}
@@ -249,7 +240,6 @@ class TestComplexRelationships(TestCase):
         leader1['surname'] = 'Washington'
         self.db.set('leader',leader1)
         tour1 = self.db.get(tour1_id)
-        print tour1, leader1
         self.assertEquals(tour1['leader'], [leader1_id, leader1['surname']+', '+leader1['firstname']])
         
 
