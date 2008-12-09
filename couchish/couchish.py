@@ -23,14 +23,25 @@ jsonutil.default_system.register_type(File, file_to_dict, file_from_dict, "file"
 jsonutil.decode_mapping['file'] = file_from_dict
 jsonutil.encode_mapping[File] = ('file',file_to_dict)
 
-def get_files(data,filehandler):
+def get_files(data,filehandler, original=None):
     dd = dottedDict(data)
+    ddoriginal = dottedDict(original)
     files = dottedDict()
     for k in dd.dottedkeys():
         if isinstance(dd[k],File):
-            files[k] = dd[k]
-            filename = dd[k].filename
-            dd[k] = File(None,filename,filehandler.get_mimetype(filename))
+            # if the file is blank
+            if dd[k].file is None and dd[k].filename is None and dd[k].mimetype is None:
+                # if we have no original then the result is None
+                if original is None:
+                    dd[k] = None
+                # otherwise the result is unchanged
+                else:
+                    dd[k] = ddoriginal[k].data
+            else:
+                # remove the file data from document and add to files for attachment handling
+                files[k] = dd[k]
+                filename = dd[k].filename
+                dd[k] = File(None,filename,filehandler.get_mimetype(filename))
     return dd.data, files.data
 
 def add_id_and_attr_to_files(data,id):
@@ -74,6 +85,8 @@ class CouchishDB(object):
         doc = self.db[doc_id]
         log.debug('detected %s files: %s'%(len(files.keys()),files))
         for key, f in files.items():
+            log.debug('(in create) Putting attachment %s for key %s'%(f.filename,key))
+            log.debug('Putting attachment %s'%f.filename)
             self.db.put_attachment(doc, f.file.read(), key)
         return doc_id
 
@@ -81,7 +94,7 @@ class CouchishDB(object):
     def set(self, type, data):
         doc_id = data['_id']
         D = self.db[doc_id]
-        newD, files = get_files(data, self.filehandler)
+        newD, files = get_files(data, self.filehandler, original=D)
         newD = jsonutil.encode_to_dict(newD)
         if D['_rev'] != data['_rev']:
             raise ResourceConflict('Revision mismatch - the document was changed before this save')
@@ -89,7 +102,9 @@ class CouchishDB(object):
         D.update( newD )
         self.db[D['_id']] = D
         for key, f in files.items():
+            log.debug('(in set) Deleting attachment %s for key %s'%(f.filename,key))
             self.db.delete_attachment(D, key)
+            log.debug('(in set) Putting attachment %s for key %s'%(f.filename,key))
             self.db.put_attachment(D, f.file.read(), key)
         self.notify(type, oldD, D)
   
