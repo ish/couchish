@@ -5,6 +5,13 @@ import sys, time
 import logging as log
 log.basicConfig(level=log.INFO, filename='/tmp/couch-updater.log')
 
+#
+# Example notifier
+# 
+# [update_notification]
+# ;unique notifier name=/home/tim/git/couchish/couchish/notifier.py
+#
+
 
 def notifications():
     simplejson_imported = False

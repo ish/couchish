@@ -106,7 +106,7 @@ class CouchishDB(object):
             self.db.delete_attachment(D, key)
             log.debug('(in set) Putting attachment %s for key %s'%(f.filename,key))
             self.db.put_attachment(D, f.file.read(), key)
-        self.notify(type, oldD, D)
+        self.notify(D, oldD)
   
 
     def set_key(self, type, id, key, value):
@@ -114,7 +114,7 @@ class CouchishDB(object):
         oldD = copy.copy(D)
         D[key] = value
         self.db[id] = D
-        self.notify(type, oldD, D)
+        self.notify(D, oldD)
  
 
     def delete(self, id):
@@ -125,8 +125,9 @@ class CouchishDB(object):
         return [jsonutil.decode_from_dict(item['value']) for item in self.db.view(view, **kw)]
  
 
-    def notify(self, type, old, new):
-        id = old['_id']
+    def notify(self, new, old=None):
+        type = new['model_type']
+        id = new['_id']
         changes = []
         # If this doc type does not have any relationships then return
         if type not in self.relationships:
@@ -135,21 +136,22 @@ class CouchishDB(object):
         # Check each relationship to see if the the changed object will trigger something, if so collect them
         log.debug('notify is scanning changes: %s'%self.relationships[type].items())
         for key, rs in self.relationships[type].items():
-	    log.debug('checking key %s'%key)
-            if old[key] != new[key]:
-	        log.debug('key %s data changed'%key)
+            log.debug('checking key %s'%key)
+            if old is None or old[key] != new[key]:
+                log.debug('key %s data changed'%key)
                 for r in rs:
-                    doctype, dockey, docview = r
-                    changes.append( (type, id, doctype, dockey, docview) )
-		log.debug('adding changes %s'%changes)
+                    doctype, dockey, docview, datakeys = r
+                    changes.append( (type, id, doctype, dockey, docview, datakeys) )
+                log.debug('adding changes %s'%changes)
                     
         # Process each trigger
-        for type, id, doctype, dockey, docview in set(changes):          
-            newvalue = self.view(docview, key=id)[0]
+        for type, id, doctype, dockey, docview, datakeys in changes:          
+            data = self.view(docview, key=id)[0]
+            newvalue = tuple( [data[k] for k in datakeys] )
             tochange = self.view('%s/by%s'%(doctype,dockey), key=id)
-	    log.debug('view %s/by%s returned %s'%(doctype,dockey, tochange))
+            log.debug('view %s/by%s returned %s'%(doctype,dockey, tochange))
             for item in tochange:
-		log.debug('for type %s and item %s changing key %s to %s'%(doctype,item,dockey,(id,newvalue)))
+                log.debug('for type %s and item %s changing key %s to %s'%(doctype,item,dockey,(id,newvalue)))
                 self.set_key(doctype,item,dockey,(id,newvalue))
 
 
