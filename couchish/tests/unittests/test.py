@@ -143,14 +143,14 @@ class TestSimpleRelationships(TestCase):
     relationships = {
         'author': {
             'name': [
-                ('book', 'author', 'author/name'),
+                ('book', 'author', 'author/name',['_id','name']),
               ], 
         }
     }
 
     author_views= {
         'all': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc) }",
-        'name': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc.name) }"
+        'name': "function(doc) { if (doc.model_type == 'author')  emit(doc._id, doc) }"
       }
 
     book_views = {
@@ -186,7 +186,7 @@ class TestSimpleRelationships(TestCase):
         author1['name'] = 'Denzil Washington'
         self.db.set('author',author1)
         book1 = self.db.get(book1_id)
-        self.assertEquals(book1['author'], [author1_id, author1['name']])
+        self.assertEquals(book1['author'], [author1_id,[author1_id, author1['name']]])
         
 
 
@@ -194,7 +194,7 @@ class TestComplexRelationships(TestCase):
 
     leader_views= {
         'all': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc) }",
-        'name': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc.surname+', '+doc.firstname) }"
+        'name': "function(doc) { if (doc.model_type == 'leader')  emit(doc._id, doc) }"
       }
 
     tour_views = {
@@ -204,10 +204,10 @@ class TestComplexRelationships(TestCase):
     relationships = {
         'leader': {
             'surname': [
-                ('tour', 'leader', 'leader/name'),
+                ('tour', 'leader', 'leader/name', ['_id','firstname','surname']),
             ],
             'firstname': [
-                ('tour', 'leader', 'leader/name'),
+                ('tour', 'leader', 'leader/name', ['_id','firstname','surname']),
             ]
         }
     }
@@ -229,18 +229,18 @@ class TestComplexRelationships(TestCase):
     def test_complexjoin(self):
         leader1 = {'firstname': 'Tim', 'surname': 'Parkin'}
         leader1_id = self.db.create('leader',leader1)
-        tour1 = {'title': 'MyTourOne','leader': [leader1_id, leader1['surname']+', '+leader1['firstname']]}
+        tour1 = {'title': 'MyTourOne','leader': [leader1_id, leader1['firstname'], leader1['surname']]}
         tour1_id = self.db.create('tour',tour1)
         leader2 = {'firstname': 'Matt', 'surname': 'Goodall'}
         leader2_id = self.db.create('leader',leader2)
-        tour2 = {'title': 'MyTourTwo','leader': [leader2_id, leader2['surname']+', '+leader2['firstname']]}
+        tour2 = {'title': 'MyTourTwo','leader': [leader2_id, leader2['firstname'], leader2['surname']]}
         tour2_id = self.db.create('tour',tour2)
 
         leader1 = self.db.get(leader1_id)
         leader1['surname'] = 'Washington'
         self.db.set('leader',leader1)
         tour1 = self.db.get(tour1_id)
-        self.assertEquals(tour1['leader'], [leader1_id, leader1['surname']+', '+leader1['firstname']])
+        self.assertEquals(tour1['leader'], [leader1_id, [leader1_id,leader1['firstname'], leader1['surname']]])
         
 
 

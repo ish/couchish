@@ -26,7 +26,7 @@ jsonutil.encode_mapping[File] = ('file',file_to_dict)
 def get_files(data,filehandler, original=None):
     dd = dottedDict(data)
     ddoriginal = dottedDict(original)
-    files = dottedDict()
+    files = {}
     for k in dd.dottedkeys():
         if isinstance(dd[k],File):
             # if the file is blank
@@ -42,11 +42,10 @@ def get_files(data,filehandler, original=None):
                 files[k] = dd[k]
                 filename = dd[k].filename
                 dd[k] = File(None,filename,filehandler.get_mimetype(filename))
-    return dd.data, files.data
+    return dd.data, files
 
 def add_id_and_attr_to_files(data,id):
     dd = dottedDict(data)
-    files = dottedDict()
     for k in dd.dottedkeys():
         if isinstance(dd[k],File):
             dd[k].id = id
@@ -83,8 +82,8 @@ class CouchishDB(object):
         if len(files.keys()) == 0:
             return doc_id
         doc = self.db[doc_id]
-        log.debug('detected %s files: %s'%(len(files.keys()),files))
-        for key, f in files.items():
+        log.debug('detected %s files: %s'%(len(files.dottedkeys()),files))
+        for key, f in files.dotteditems():
             log.debug('(in create) Putting attachment %s for key %s'%(f.filename,key))
             log.debug('Putting attachment %s'%f.filename)
             self.db.put_attachment(doc, f.file.read(), key)
