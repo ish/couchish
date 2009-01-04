@@ -11,6 +11,7 @@ from formish.filehandler import TempFileHandlerWeb
 
 from couchdb import design
 from couchdb.client import ResourceConflict
+from datetime import datetime
 
 
 def file_to_dict(obj):
@@ -173,7 +174,7 @@ class FileAccessor(object):
 
     def get_mtime(self, id):
         item_id, attribute = id.split('/')
-        return None
+        return datetime( 2008,1,1 )
 
 
     def get_file(self, id):
