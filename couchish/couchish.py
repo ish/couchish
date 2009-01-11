@@ -80,6 +80,7 @@ class CouchishDB(object):
         data['model_type'] = type
         data, files = get_files(data, self.filehandler)
         doc_id = self.db.create(jsonutil.encode_to_dict(dict(data)))
+        log.debug('(in create) doc_id = %s'%doc_id)
         if len(files.keys()) == 0:
             return doc_id
         doc = self.db[doc_id]

@@ -58,6 +58,17 @@ def build_model(db, model_dir):
         name = file.split('.')[0]
         definition = yaml.load(open('%s/%s'%(model_dir,file)))
         metadata[name] = definition.get('metadata',{})
+        log.debug('METADATA: %s'%metadata)
+        # set defaults if missing
+        metadata['labels'] = metadata.get('labels',{})
+        metadata['labels']['singular'] = metadata['labels'].get('singular','item')
+        metadata['labels']['plural'] = metadata['labels'].get('plural','items')
+        metadata['templates'] = metadata.get('templates',{})
+        metadata['templates']['item'] = metadata['templates'].get('item','item')
+        metadata['templates']['items'] = metadata['templates'].get('items','items')
+        metadata['templates']['items-table'] = metadata['templates'].get('items-table', [ {'label':"id",'value':"${item['_id']}"} ])
+        log.debug('METADATA: %s'%metadata)
+
         log.debug('name: %s'%name)
         log.debug('definition: %s'%definition)
         model[name] = get_model(definition, db, name)
