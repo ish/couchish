@@ -70,6 +70,10 @@ class CouchishDB(object):
         data = add_id_and_attr_to_files(data,key)
         return data
 
+    def get_by(self, type, by, **k):
+        data = [add_id_and_attr_to_files(jsonutil.decode_from_dict(item['value']),item['id']) for item in self.db.view('%s/by%s'%(type,by),**k)]
+        return data
+
 
     def get_attachment(self, key, name):
         return self.db.get_attachment(key, name)
