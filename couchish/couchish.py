@@ -84,11 +84,12 @@ class CouchishDB(object):
         data['model_type'] = type
         data, files = get_files(data, self.filehandler)
         doc_id = self.db.create(jsonutil.encode_to_dict(dict(data)))
+        log.debug('(in create) doc_id = %s'%doc_id)
         if len(files.keys()) == 0:
             return doc_id
         doc = self.db[doc_id]
-        log.debug('detected %s files: %s'%(len(files.dottedkeys()),files))
-        for key, f in files.dotteditems():
+        log.debug('detected %s files: %s'%(len(files.keys()),files))
+        for key, f in files.items():
             log.debug('(in create) Putting attachment %s for key %s'%(f.filename,key))
             log.debug('Putting attachment %s'%f.filename)
             self.db.put_attachment(doc, f.file.read(), key)
