@@ -5,8 +5,8 @@ from couchdb.design import ViewDefinition
 from pollen import jsonutil
 
 import formish
-from formishbuilder.builder import process_formishbuilder_form_definition, build
-from formishbuilder.registry import formishTypeRegistry, formishWidgetRegistry, FormishWidgetRegistry, FormishTypeRegistry
+from formishbuilder.builder import build
+from formishbuilder.registry import FormishWidgetRegistry, FormishTypeRegistry
 from convertish.convert import string_converter
 import schemaish.type
 
@@ -25,13 +25,18 @@ class CouchDBSelectChoice(formish.SelectChoice):
         else:
             return ''
 
+
+
 class WidgetRegistry(FormishWidgetRegistry):
+
     def __init__(self, db):
         self.db = db
         FormishWidgetRegistry.__init__(self)
         self.registry['select-choice-couchdb'] = self.selectChoiceCouchDBFactory
         self.registry['checkbox-multi-choice-tree-couchdb'] = self.checkboxMultiChoiceTreeCouchDBFactory
         self.registry['file-upload-couchdb'] = self.fileUploadCouchDBFactory
+
+
     def selectChoiceCouchDBFactory(self, widgetSpec):
         def options(db, label_template, view, datakeys):
             results = [jsonutil.decode_from_dict(item['value']) for item in db.view(view)]
@@ -41,11 +46,15 @@ class WidgetRegistry(FormishWidgetRegistry):
         datakeys = widgetSpec['options']['datakeys'] 
         view = '%s/all'%reference
         return CouchDBSelectChoice(options=options(self.db, label_template, view, datakeys))
+
+
     def checkboxMultiChoiceTreeCouchDBFactory(self, widgetSpec):
         def options(db, view):
             return [(item['key'][0],item['key'][1]) for item in db.view(view)]
         view = widgetSpec['options']
         return formish.CheckboxMultiChoiceTree(options=options(self.db,view))
+
+
     def fileUploadCouchDBFactory(self, widgetSpec):
         originalurl = widgetSpec['options'].get('originalurl','/images/missing-image.jpg')
         def urlfactory(obj):
@@ -59,17 +68,16 @@ class WidgetRegistry(FormishWidgetRegistry):
             filehandler=formish.filehandler.TempFileHandlerWeb(resource_root=resource_root, urlfactory=urlfactory), originalurl=originalurl,show_image_preview=True)
 
 
-
 class TypeRegistry(FormishTypeRegistry):
     pass
 
-            
+
 
 def build_formish_form(definition, db, name):
     definition['fields'].insert(0, {'name': '_rev', 'widget':{'type': 'hidden'}})
     definition['fields'].insert(0, {'name': '_id', 'widget':{'type': 'hidden'}})
-        
-    return build(process_formishbuilder_form_definition( definition ), widgetRegistry=WidgetRegistry(db), typeRegistry=TypeRegistry())
+    return build(definition, widgetRegistry=WidgetRegistry(db), typeRegistry=TypeRegistry())
+
 
 
 def init_views(db, model_type, views):
