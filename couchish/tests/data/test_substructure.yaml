@@ -1,0 +1,17 @@
+fields:
+- name: first_name
+
+- name: last_name
+
+- name: address
+  type: Structure()
+
+- name: address.street
+
+- name: address.city
+
+- name: address.postcode
+
+- name: address.country
+ 
+ 
