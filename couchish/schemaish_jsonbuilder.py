@@ -217,9 +217,9 @@ class SchemaishTypeRegistry(object):
 
 schemaish_type_registry=SchemaishTypeRegistry()
 
-def build(sparse_definition, type_registry=schemaish_type_registry):
+def expand_definition(pre_expand_definition):
     definition = []
-    for field in sparse_definition['fields']:
+    for field in pre_expand_definition['fields']:
         item = {}
         item['key'] = strip_stars(field['name'])
         item['starkey'] = field['name']
@@ -234,6 +234,11 @@ def build(sparse_definition, type_registry=schemaish_type_registry):
         else:
             item['validator'] = None
         definition.append(item)
+    return definition
+
+
+def build(definition, type_registry=schemaish_type_registry):
+    definition = expand_definition(definition)
     schema = schemaish.Structure()
     cache = {}    
     for parents, children in walk_definition(definition):
