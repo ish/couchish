@@ -1,4 +1,4 @@
-from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, expand_definition
+from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars
 import formish
 from formish import filehandler
 
@@ -112,7 +112,13 @@ class FormishWidgetRegistry(object):
             'options': a sequence of mappings containing 'name' and
                 'description' keys.
         """
-        options = [(o['name'], o['description']) for o in widget_spec['options']]
+        first = widget_spec['options'][0]
+        if isinstance(first, dict):
+            options = [(o['name'], o['description']) for o in widget_spec['options']]
+        elif isinstance(first, tuple) or isinstance(first, list):
+            options = [(o[0], o[1]) for o in widget_spec['options']]
+        else:
+            options = [(o, o) for o in widget_spec['options']]
         return formish.RadioChoice(options=options)
 
 
@@ -123,7 +129,13 @@ class FormishWidgetRegistry(object):
         Specification attributes:
             'options': a sequence of strings
         """
-        options = widget_spec['options']
+        first = widget_spec['options'][0]
+        if isinstance(first, dict):
+            options = [(o['name'], o['description']) for o in widget_spec['options']]
+        elif isinstance(first, tuple) or isinstance(first, list):
+            options = [(o[0], o[1]) for o in widget_spec['options']]
+        else:
+            options = [(o, o) for o in widget_spec['options']]
         return formish.SelectWithOtherChoice(options=options)
 
 
@@ -135,7 +147,13 @@ class FormishWidgetRegistry(object):
             'options': a sequence of mappings containing 'name' and
                 'description' keys.
         """
-        options = [(o['name'], o['description']) for o in widget_spec['options']]
+        first = widget_spec['options'][0]
+        if isinstance(first, dict):
+            options = [(o['name'], o['description']) for o in widget_spec['options']]
+        elif isinstance(first, tuple) or isinstance(first, list):
+            options = [(o[0], o[1]) for o in widget_spec['options']]
+        else:
+            options = [(o, o) for o in widget_spec['options']]
         return formish.CheckboxMultiChoice(options=options)
 
     def checkbox_factory(self, widget_spec):
@@ -173,10 +191,35 @@ class FormishWidgetRegistry(object):
 
 formish_widget_registry = FormishWidgetRegistry()
 
+def expand_definition(pre_expand_definition):
+    definition = []
+    for field in pre_expand_definition['fields']:
+        item = {}
+        item['key'] = strip_stars(field['name'])
+        item['starkey'] = field['name']
+        if field.get('title') == '':
+            item['title'] = None
+        else:
+            item['title'] = field.get('title')
+        item['description'] = field.get('description')
+        item['type'] = field.get('type','String()')
+        if field.get('required') is True:
+            item['validator'] = validator.Required()
+        else:
+            item['validator'] = None
+        if 'widget' in field:
+            item['widget'] = {'type': field['widget']['type']}
+            if 'options' in field['widget']:
+                item['widget']['options'] = field['widget']['options']
+        definition.append(item)
+    return definition
+
+
 def build(definition, name=None, defaults=None, errors=None, action='', widget_registry=formish_widget_registry, type_registry=schemaish_type_registry):
     schema = schema_build(definition, type_registry=type_registry)
     definition = expand_definition(definition)
     form = formish.Form(schema, name=name, defaults=defaults, errors=errors, action_url=action)
+
     for item in definition:
         w = widget_registry.make_formish_widget(item['type'], item.get('widget'))
         if w is not None:

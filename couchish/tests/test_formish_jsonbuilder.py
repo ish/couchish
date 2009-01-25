@@ -9,6 +9,11 @@ def get_schema(filename):
     form = build(definition)
     return form.structure.attr
 
+def get_form(filename):
+    definition = yaml.load( open(DATADIR%filename).read() )
+    form = build(definition)
+    return form
+
 class Test(unittest.TestCase):
 
     def test_simple(self):
@@ -75,6 +80,15 @@ class Test(unittest.TestCase):
             assert 'schemaish.attr.String' in repr(attr[1])
 
 
-
+    def test_widgets(self):
+        form = get_form('test_widgets.yaml')
+        assert repr(form['input'].widget) == '<bound widget name="input", widget="Input", type="String">'
+        assert repr(form['hidden'].widget) == '<bound widget name="hidden", widget="Hidden", type="String">'
+        assert repr(form['textarea'].widget) == '<bound widget name="textarea", widget="TextArea", type="String">'
+        assert repr(form['selectchoice'].widget) == '<bound widget name="selectchoice", widget="SelectChoice", type="String">'
+        assert repr(form['radiochoice'].widget) == '<bound widget name="radiochoice", widget="RadioChoice", type="String">'
+        assert repr(form['selectwithotherchoice'].widget) == '<bound widget name="selectwithotherchoice", widget="SelectWithOtherChoice", type="String">'
+        assert repr(form['checkboxmultichoice'].widget) == '<bound widget name="checkboxmultichoice", widget="CheckboxMultiChoice", type="Sequence">'
+        
         
 
