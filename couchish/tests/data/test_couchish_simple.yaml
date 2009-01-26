@@ -1,0 +1,11 @@
+
+fields:
+- name: first_name
+
+- name: last_name
+
+- name: address
+  type: Reference()
+
+ 
+ 
