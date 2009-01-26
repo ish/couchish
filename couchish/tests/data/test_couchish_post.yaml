@@ -1,0 +1,8 @@
+fields:
+- name: subject
+
+- name: author
+  type: Reference()
+  refersto: author_name
+
+

@@ -2,12 +2,16 @@ import schemaish, formish
 from couchish.formish_jsonbuilder import build as formish_build
 from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
 from couchish.formish_jsonbuilder import FormishWidgetRegistry
+from sets import Set
 
 
 class Reference(schemaish.attr.Attribute):
     """ a generic reference
     """
-    pass
+    def __init__(self, **k):
+        self.refersto = k.pop('refersto')
+        schemaish.attr.Attribute.__init__(self,**k)
+        
 
 
 class TypeRegistry(SchemaishTypeRegistry):
@@ -55,8 +59,78 @@ class WidgetRegistry(FormishWidgetRegistry):
         return SelectCouchDBChoice(options=options(self.db, label_template, view, datakeys))
 
 
+def expand_definition(pre_expand_definition):
+    definition = []
+    for field in pre_expand_definition['fields']:
+        item = {}
+        item['key'] = strip_stars(field['name'])
+        item['type'] = field.get('type','String()')
+        item['view'] = field.get('view', None)
+        definition.append(item) 
+    return definition
+
+def get_views(models_definition, views_definition):
+
+
+    views = {} 
+    views_by_viewname = {}
+    views_by_uses = {} 
+    attributes_by_attribute = {} 
+    viewnames_by_attribute = {} 
+    attributes_by_viewname = {}
+
+    for view in views_definition:
+        views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view['uses']}
+        views[view['url']] = view['map']
+
+
+    field_to_view = {}
+    for type, definition in models_definition.items():
+        for field in definition['fields']:
+            if 'refersto' in field:
+                refersto = field['refersto']
+                view = views_by_viewname[refersto]
+                uses = view['uses']
+
+                
+                if isinstance(uses, basestring):
+                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( field['name'] )
+                    #attributes_by_attribute.setdefault(uses,{}).setdefault(type,[]).append( field['name'] )
+                    viewnames_by_attribute.setdefault(uses, Set()).add(refersto)
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( uses )
+                else:
+                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( field['name'] )
+                    for use in uses:
+                        #attributes_by_attribute.setdefault(use,{}).setdefault(type,[]).append( field['name'] )
+                        viewnames_by_attribute.setdefault(use, Set()).add(refersto)
+                        attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( use )
+
+
+    for url, view in views_by_uses.items():
+        viewdef = 'function (doc) {'
+        for type, attrs in view.items():
+            viewdef += '    if (type == \''+type+'\'){'
+            for attr in attrs:
+                viewdef += '        emit(doc.'+attr+'._ref, doc._id);'
+            viewdef += '    };'
+        viewdef += '};'
+        views[url] = viewdef
+
+    #from pprint import pprint
+    #print '='*40,'Views','='*40
+    #pprint(views)
+    #print '='*40,'Viewnames by Attribute','='*40
+    #pprint(viewnames_by_attribute)
+    #print '='*40,'Attriutes by View Name','='*40
+    #pprint(attributes_by_viewname)
+            
+    out = {'views': views,'views_by_viewname': views_by_viewname, 'viewnames_by_attribute': viewnames_by_attribute, 'attributes_by_viewname':attributes_by_viewname}
+    return out
+
 
 
 def build(definition, name=None, defaults=None, errors=None, action='', widget_registry=WidgetRegistry(), type_registry=TypeRegistry()):
     form = formish_build(definition, name=name, defaults=defaults, errors=errors, action=action, widget_registry=widget_registry, type_registry=type_registry)
+
+
     return form

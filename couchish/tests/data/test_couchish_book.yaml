@@ -1,0 +1,12 @@
+fields:
+- name: title
+
+- name: writtenby
+  type: Reference()
+  refersto: author_name
+
+- name: coauthored
+  type: Reference()
+  refersto: author_surname
+
+

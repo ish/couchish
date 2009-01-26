@@ -312,4 +312,4 @@ And the yaml data that builds it
       - name: author_name
         url: /author/name_by_id
         map : function(doc) { emit(doc._id, {first_name: doc.first_name, last_name: doc.last_name}); }
-        uses: [first_name, last_name]
+        uses: author

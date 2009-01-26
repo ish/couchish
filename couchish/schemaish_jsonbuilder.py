@@ -206,7 +206,7 @@ class SchemaishTypeRegistry(object):
         return schemaish.File(**k)
 
 
-    def list_factory(self, subtype):
+    def list_factory(self, subtype, **k):
         def f(**k):
             return schemaish.Sequence(self.make_schemaish_type(subtype), **k)
         return f
@@ -220,7 +220,7 @@ schemaish_type_registry=SchemaishTypeRegistry()
 def expand_definition(pre_expand_definition):
     definition = []
     for field in pre_expand_definition['fields']:
-        item = {}
+        item = field
         item['key'] = strip_stars(field['name'])
         item['starkey'] = field['name']
         if field.get('title') == '':
@@ -279,8 +279,7 @@ def build(definition, type_registry=schemaish_type_registry):
             else:
                 # Create and add a field.
                 schemaish_type = type_registry.make_schemaish_type(
-                    item.get('type','String()'), title=item.get('title'),
-                    description=item.get('description'), validator=item.get('validator') )
+                    item.get('type','String()'), **item )
 
                 child_adder((schemaish_key, schemaish_type))
                 
