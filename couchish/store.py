@@ -5,7 +5,7 @@ Views we can build:
     * ref and ref reversed views, one pair per relationship
 """
 
-import itertools
+import operator
 from couchdb.design import ViewDefinition
 
 from couchdbsession import session
@@ -123,10 +123,12 @@ class CouchishStoreSession(object):
             doc_type = doc['model_type']
             edited = set('.'.join([doc_type, '.'.join(action['path'])])
                          for action in actions if action['action'] == 'edit')
+            # Build a set of all the views affected by the changed attributes.
             views = set()
             for attr in edited:
                 views.update(viewnames_by_attribute.get(attr, []))
             for view in views:
+                # Lazy load the ref_data.
                 ref_data = NO_REF_DATA
                 attrs_by_type = attributes_by_viewname[view]
                 view_url = views_by_viewname[view]['url']
@@ -140,5 +142,9 @@ class CouchishStoreSession(object):
                         ref_data = self.view(view_url, startkey=ref_key, limit=1).rows[0].value
                         ref_data['_ref'] = ref_key
                     for attr in attrs_by_type[ref_doc['model_type']]:
-                        ref_doc[attr] = ref_data
+                        _set_nested_item(ref_doc, attr.split('.'), ref_data)
+
+
+def _set_nested_item(obj, path, value):
+    operator.setitem(reduce(operator.getitem, path[:-1], obj), path[-1], value)
 
