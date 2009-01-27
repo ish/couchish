@@ -81,7 +81,7 @@ def get_views(models_definition, views_definition):
     for view in views_definition:
         if 'url' not in view:
             view['url'] = '/couchish/%s'%view['name']
-        views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view['uses']}
+        views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view('uses',None)}
         views[view['url']] = view['map']
 
 
