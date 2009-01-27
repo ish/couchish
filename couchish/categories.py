@@ -31,8 +31,6 @@ def create_categories(db, categories):
     """
     flatcats = accumulate_categories(categories,[],'')
     for key, label in flatcats:
-        print 'incat',key, label
         if len(db.view('_all_docs',key=key)) == 0:
             log.debug('initialising category (label,key): (%s,%s)'%(label, key))
-            print 'initialising category (label,key): (%s,%s)'%(label, key)
             db[key] = {'model_type':'category', 'label': label, 'keys': key.split('.')}
