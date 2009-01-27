@@ -115,13 +115,13 @@ def get_views(models_definition, views_definition):
 
 
     for url, view in views_by_uses.items():
-        viewdef = 'function (doc) {'
+        viewdef = 'function (doc) {\n'
         for type, attrs in view.items():
-            viewdef += '    if (type == \''+type+'\'){'
+            viewdef += '    if (doc.model_type == \''+type+'\'){\n'
             for attr in attrs:
-                viewdef += '        emit(doc.'+attr+'._ref, null);'
-            viewdef += '    };'
-        viewdef += '};'
+                viewdef += '        emit(doc.'+attr+'._ref, null);\n'
+            viewdef += '    }\n'
+        viewdef += '}\n'
         views[url] = viewdef
 
     out = {'views': views,'views_by_viewname': views_by_viewname, 'viewnames_by_attribute': viewnames_by_attribute, 'attributes_by_viewname':attributes_by_viewname}
