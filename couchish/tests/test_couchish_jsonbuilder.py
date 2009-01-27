@@ -31,10 +31,15 @@ class Test(unittest.TestCase):
                                                       'author_surname': {'book': Set(['author.last_name']), \
                                                                          'dvd': Set(['author.last_name'])}}
         views = viewdata['views']
-        assert simplifyjs(views['/author_name_by_id']) == "function(doc){if(model_type=='author'){emit(doc._id,{first_name:doc.first_name,last_name:doc.last_name})}}"
-        assert simplifyjs(views['/author_name_by_id-rev']) == "function(doc){if(type=='post'){emit(doc.author._ref,doc._id)}if(type=='book'){emit(doc.writtenby._ref,doc._id)}}"
-        assert simplifyjs(views['/author_surname_by_id']) == "function(doc){if(model_type=='author'){emit(doc._id,{last_name:doc.last_name})}}"
-        assert simplifyjs(views['/author_surname_by_id-rev']) == "function(doc){if(type=='dvd'){emit(doc.writtenby._ref,doc._id)}if(type=='book'){emit(doc.coauthored._ref,doc._id)}}"
+        assert simplifyjs(views['/couchish/author_name']) == "function(doc){if(model_type=='author'){emit(doc._id,{first_name:doc.first_name,last_name:doc.last_name})}}"
+        assert simplifyjs(views['/couchish/author_name-rev']) == "function(doc){if(type=='post'){emit(doc.author._ref,doc._id)}if(type=='book'){emit(doc.writtenby._ref,doc._id)}}"
+        assert simplifyjs(views['/customdesigndoc/author_surname']) == "function(doc){if(model_type=='author'){emit(doc._id,{last_name:doc.last_name})}}"
+        assert simplifyjs(views['/customdesigndoc/author_surname-rev']) == "function(doc){if(type=='dvd'){emit(doc.writtenby._ref,doc._id)}if(type=='book'){emit(doc.coauthored._ref,doc._id)}}"
+        print '*'*80
+        from pprint import pprint
+        pprint(viewdata['views'])
+
+        print '*'*80
 
 
     
@@ -46,4 +51,8 @@ class Test(unittest.TestCase):
         models_definition = {'author': author_definition, 'post': post_definition}
         
         viewdata = get_views(models_definition, views_definition)
-        assert simplifyjs(viewdata['views']['/author_by_last_name']) == "function(doc){if(model_type=='author'){emit(doc.last_name,doc._id)}}"
+        assert simplifyjs(viewdata['views']['/author/by_last_name']) == "function(doc){if(model_type=='author'){emit(doc.last_name,doc._id)}}"
+        assert viewdata['views']['/post/all'] == "function(doc) { if (doc.model_type == 'post')  emit(doc._id, doc) }"
+        from pprint import pprint
+        pprint(viewdata['views'])
+        print '*'*80

@@ -1,5 +1,5 @@
 fields:
 - name: first_name
 - name: last_name
-  viewby: True
+  viewby: /author/by_last_name
  

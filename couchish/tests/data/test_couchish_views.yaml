@@ -1,5 +1,4 @@
 - name: author_name
-  url: /author_name_by_id
   map : |
     function(doc) {
         if (model_type=='author') {
@@ -11,7 +10,7 @@
   uses: [author.first_name, author.last_name]
 
 - name: author_surname
-  url: /author_surname_by_id
+  url: /customdesigndoc/author_surname
   map : |
     function(doc) {
         if (model_type=='author') {

@@ -79,6 +79,8 @@ def get_views(models_definition, views_definition):
     attributes_by_viewname = {}
 
     for view in views_definition:
+        if 'url' not in view:
+            view['url'] = '/couchish/%s'%view['name']
         views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view['uses']}
         views[view['url']] = view['map']
 
@@ -101,8 +103,13 @@ def get_views(models_definition, views_definition):
                     for use in uses:
                         viewnames_by_attribute.setdefault(use, Set()).add(refersto)
                         attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( use )
-            if 'viewby' in field and field['viewby'] == True:
-                views['/%s_by_%s'%(type,field['name'])] = "function(doc) { if (model_type=='author') { emit(doc.%s,  doc._id ); } }"%field['name']
+            if 'viewby' in field:
+                if field['viewby'] == True:
+                    url = '/%s/by_%s'%(type,field['name'])
+                else:
+                    url = field['viewby']
+                views[url] = "function(doc) { if (model_type=='%s') { emit(doc.%s,  null ); } }"%(type,field['name'])
+            views['/%s/all'%type] = "function(doc) { if (doc.model_type == '%s')  emit(doc._id, null) }"%type
 
 
 
@@ -112,7 +119,7 @@ def get_views(models_definition, views_definition):
         for type, attrs in view.items():
             viewdef += '    if (type == \''+type+'\'){'
             for attr in attrs:
-                viewdef += '        emit(doc.'+attr+'._ref, doc._id);'
+                viewdef += '        emit(doc.'+attr+'._ref, null);'
             viewdef += '    };'
         viewdef += '};'
         views[url] = viewdef

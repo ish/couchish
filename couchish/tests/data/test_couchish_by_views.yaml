@@ -1,5 +1,4 @@
 - name: author_name
-  url: /author_name_by_id
   map : |
     function(doc) {
         if (model_type=='author') {
