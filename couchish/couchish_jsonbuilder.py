@@ -69,6 +69,32 @@ def expand_definition(pre_expand_definition):
         definition.append(item) 
     return definition
 
+
+def build_refersto_view(uses):
+    model_types = set()
+    if isinstance(uses, basestring):
+        model_type = uses.split('.')[0]
+        uses = [uses]
+    else:
+        for use in uses:
+            mt = use.split('.')[0]
+            model_types.add(mt)
+        if len(model_types) > 1:
+            raise ValueError('Can only use one model type in "uses" at the moment')
+        model_type = list(model_types)[0]
+    viewdef = 'function (doc) {\n'
+    viewdef += '    if (doc.model_type == \''+model_type+'\'){\n'
+    viewdef += '        emit(doc._id, {'
+    for use in uses:
+        attr = '.'.join( use.split('.')[1:] )
+        viewdef += 'doc.'+attr+', '
+    viewdef += ' })\n'
+    viewdef += '    }\n'
+    viewdef += '}\n'
+    return viewdef
+
+
+
 def get_views(models_definition, views_definition):
 
 
@@ -80,9 +106,13 @@ def get_views(models_definition, views_definition):
 
     for view in views_definition:
         if 'url' not in view:
-            view['url'] = 'couchish/%s'%view['name']
+            if 'designdoc' not in view:
+                view['url'] = 'couchish/%s'%view['name']
+            else:
+                view['url'] = '%s/%s'%(view['designdoc'],view['name'])
         views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
-        views[view['url']] = view['map']
+        if 'map' in view:
+            views[view['url']] = view['map']
 
 
     field_to_view = {}
@@ -92,6 +122,10 @@ def get_views(models_definition, views_definition):
                 refersto = field['refersto']
                 view = views_by_viewname[refersto]
                 uses = view['uses']
+                #if 'map' not in view:
+                    #    map = build_refersto_view(uses)
+                    #    view['map'] = map
+                    #    views[view['url']] = map
 
                 
                 if isinstance(uses, basestring):

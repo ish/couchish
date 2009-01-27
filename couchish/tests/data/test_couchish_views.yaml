@@ -1,4 +1,5 @@
 - name: author_name
+  designdoc: customdes
   map : |
     function(doc) {
         if (doc.model_type=='author') {
