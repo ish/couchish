@@ -14,9 +14,9 @@ def accumulate_categories(cats, flatcats, prefix):
             accumulate_categories(subcats, flatcats, '%s.'%dotted_key)
     return flatcats
     
-def get_categories(db, categories_yamlfile):
+def create_categories(db, categories):
     """
-    uses this view
+    Allows the use of views similar to the following.
     
     function(doc) {
       if (doc.model_type == 'tour') {
@@ -29,9 +29,10 @@ def get_categories(db, categories_yamlfile):
           } 
         }
     """
-    categories = yaml.load(open(categories_yamlfile))
     flatcats = accumulate_categories(categories,[],'')
     for key, label in flatcats:
+        print 'incat',key, label
         if len(db.view('_all_docs',key=key)) == 0:
             log.debug('initialising category (label,key): (%s,%s)'%(label, key))
-            db[key] = {'model_type':'category','label': label, 'keys': key.split('.')}
+            print 'initialising category (label,key): (%s,%s)'%(label, key)
+            db[key] = {'model_type':'category', 'label': label, 'keys': key.split('.')}
