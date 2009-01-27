@@ -1,0 +1,14 @@
+- name: author_name
+  url: /author_name_by_id
+  map : |
+    function(doc) {
+        if (model_type=='author') {
+            emit(doc._id,  {first_name: doc.first_name, last_name: doc.last_name} );
+        }
+    }
+
+  key: _id 
+  uses: [author.first_name, author.last_name]
+
+ 
+ 

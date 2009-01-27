@@ -75,7 +75,6 @@ def get_views(models_definition, views_definition):
     views = {} 
     views_by_viewname = {}
     views_by_uses = {} 
-    attributes_by_attribute = {} 
     viewnames_by_attribute = {} 
     attributes_by_viewname = {}
 
@@ -95,15 +94,17 @@ def get_views(models_definition, views_definition):
                 
                 if isinstance(uses, basestring):
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( field['name'] )
-                    #attributes_by_attribute.setdefault(uses,{}).setdefault(type,[]).append( field['name'] )
                     viewnames_by_attribute.setdefault(uses, Set()).add(refersto)
                     attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( uses )
                 else:
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( field['name'] )
                     for use in uses:
-                        #attributes_by_attribute.setdefault(use,{}).setdefault(type,[]).append( field['name'] )
                         viewnames_by_attribute.setdefault(use, Set()).add(refersto)
                         attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( use )
+            if 'viewby' in field and field['viewby'] == True:
+                views['/%s_by_%s'%(type,field['name'])] = "function(doc) { if (model_type=='author') { emit(doc.%s,  doc._id ); } }"%field['name']
+
+
 
 
     for url, view in views_by_uses.items():
@@ -116,14 +117,6 @@ def get_views(models_definition, views_definition):
         viewdef += '};'
         views[url] = viewdef
 
-    #from pprint import pprint
-    #print '='*40,'Views','='*40
-    #pprint(views)
-    #print '='*40,'Viewnames by Attribute','='*40
-    #pprint(viewnames_by_attribute)
-    #print '='*40,'Attriutes by View Name','='*40
-    #pprint(attributes_by_viewname)
-            
     out = {'views': views,'views_by_viewname': views_by_viewname, 'viewnames_by_attribute': viewnames_by_attribute, 'attributes_by_viewname':attributes_by_viewname}
     return out
 
