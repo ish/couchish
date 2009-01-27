@@ -108,7 +108,7 @@ def get_views(models_definition, views_definition):
                     url = '/%s/by_%s'%(type,field['name'])
                 else:
                     url = field['viewby']
-                views[url] = "function(doc) { if (model_type=='%s') { emit(doc.%s,  null ); } }"%(type,field['name'])
+                views[url] = "function(doc) { if (doc.model_type=='%s') { emit(doc.%s,  null ); } }"%(type,field['name'])
             views['/%s/all'%type] = "function(doc) { if (doc.model_type == '%s')  emit(doc._id, null) }"%type
 
 
