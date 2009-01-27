@@ -80,8 +80,8 @@ def get_views(models_definition, views_definition):
 
     for view in views_definition:
         if 'url' not in view:
-            view['url'] = '/couchish/%s'%view['name']
-        views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view('uses',None)}
+            view['url'] = 'couchish/%s'%view['name']
+        views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
         views[view['url']] = view['map']
 
 
@@ -97,19 +97,19 @@ def get_views(models_definition, views_definition):
                 if isinstance(uses, basestring):
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( field['name'] )
                     viewnames_by_attribute.setdefault(uses, Set()).add(refersto)
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( uses )
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( field['name'] )
                 else:
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( field['name'] )
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( field['name'] )
                     for use in uses:
                         viewnames_by_attribute.setdefault(use, Set()).add(refersto)
-                        attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( use )
             if 'viewby' in field:
                 if field['viewby'] == True:
-                    url = '/%s/by_%s'%(type,field['name'])
+                    url = '%s/by_%s'%(type,field['name'])
                 else:
                     url = field['viewby']
                 views[url] = "function(doc) { if (doc.model_type=='%s') { emit(doc.%s,  null ); } }"%(type,field['name'])
-            views['/%s/all'%type] = "function(doc) { if (doc.model_type == '%s')  emit(doc._id, null) }"%type
+            views['%s/all'%type] = "function(doc) { if (doc.model_type == '%s')  emit(doc._id, null) }"%type
 
 
 
@@ -117,11 +117,11 @@ def get_views(models_definition, views_definition):
     for url, view in views_by_uses.items():
         viewdef = 'function (doc) {'
         for type, attrs in view.items():
-            viewdef += '    if (type == \''+type+'\'){'
+            viewdef += '    if (doc.model_type == \''+type+'\'){'
             for attr in attrs:
                 viewdef += '        emit(doc.'+attr+'._ref, null);'
-            viewdef += '    };'
-        viewdef += '};'
+            viewdef += '    }'
+        viewdef += '}'
         views[url] = viewdef
 
     out = {'views': views,'views_by_viewname': views_by_viewname, 'viewnames_by_attribute': viewnames_by_attribute, 'attributes_by_viewname':attributes_by_viewname}
