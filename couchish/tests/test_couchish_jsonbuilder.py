@@ -78,5 +78,18 @@ class Test(unittest.TestCase):
             view.sync(self.db)
 
 
+    def test_autoviews(self):
+        post_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_post.yaml').read() )
+        author_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_author.yaml').read() )
+        views_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_views.yaml').read() )
+
+        models_definition = {'author': author_definition, 'post': post_definition}
+        
+        viewdata = get_views(models_definition, views_definition)
+        views = viewdata['views']
+
+        assert simplifyjs(views['couchish/author_name']) == "function(doc){if(doc.model_type=='author'){emit(doc._id,{first_name:doc.first_name,last_name:doc.last_name})}}"
+        assert simplifyjs(views['couchish/author_name-rev']) == "function(doc){if(doc.model_type=='post'){emit(doc.author._ref,null)}}"
+
 
         

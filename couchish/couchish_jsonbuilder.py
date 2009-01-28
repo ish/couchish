@@ -1,4 +1,5 @@
 from sets import Set
+from couchish.createview import getjs
 
 
 def build_refersto_view(uses):
@@ -15,11 +16,7 @@ def build_refersto_view(uses):
         model_type = list(model_types)[0]
     viewdef = 'function (doc) {\n'
     viewdef += '    if (doc.model_type == \''+model_type+'\'){\n'
-    viewdef += '        emit(doc._id, {'
-    for use in uses:
-        attr = '.'.join( use.split('.')[1:] )
-        viewdef += 'doc.'+attr+', '
-    viewdef += ' })\n'
+    viewdef += '        emit(doc._id, %s )\n'%getjs(uses)
     viewdef += '    }\n'
     viewdef += '}\n'
     return viewdef
@@ -39,7 +36,7 @@ def get_views(models_definition, views_definition):
                 view['url'] = 'couchish/%s'%view['name']
             else:
                 view['url'] = '%s/%s'%(view['designdoc'],view['name'])
-        views_by_viewname[view['name']] = {'url':view['url'], 'map': view['map'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
+        views_by_viewname[view['name']] = {'url':view['url'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
         if 'map' in view:
             views[view['url']] = view['map']
 
@@ -51,10 +48,10 @@ def get_views(models_definition, views_definition):
                 refersto = field['refersto']
                 view = views_by_viewname[refersto]
                 uses = view['uses']
-                #if 'map' not in view:
-                    #    map = build_refersto_view(uses)
-                    #    view['map'] = map
-                    #    views[view['url']] = map
+                if 'map' not in view:
+                        map = build_refersto_view(uses)
+                        view['map'] = map
+                        views[view['url']] = map
 
                 
                 if isinstance(uses, basestring):
@@ -72,7 +69,7 @@ def get_views(models_definition, views_definition):
                 else:
                     url = field['viewby']
                 views[url] = "function(doc) { if (doc.model_type=='%s') { emit(doc.%s,  null ); } }"%(type,field['name'])
-            views['%s/all'%type] = "function(doc) { if (doc.model_type == '%s')  emit(doc._id, null) }"%type
+            views['%s/all'%type] = "function(doc) { if (doc.model_type == '%s') { emit(doc._id, null) }"%type
 
 
 
