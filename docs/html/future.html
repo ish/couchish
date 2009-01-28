@@ -1,0 +1,363 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Schema for Schema Definition &mdash; couchish v0.5 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.5',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="couchish v0.5 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="index.html">couchish v0.5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  
+  <div class="section" id="schema-for-schema-definition">
+<h1>Schema for Schema Definition<a class="headerlink" href="#schema-for-schema-definition" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="schema-schema">
+<h2>Schema Schema<a class="headerlink" href="#schema-schema" title="Permalink to this headline">¶</a></h2>
+<p>This defines how a schema should be created..</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">pythonidentifier</span><span class="o">,</span>
+      <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="nx">short_string</span><span class="o">,</span>
+      <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="nx">long_string</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="nx">schema_type</span><span class="o">,</span>
+      <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="nx">validatish_validator</span><span class="o">,</span>
+    <span class="p">}</span><span class="o">,</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="name">
+<h3>name<a class="headerlink" href="#name" title="Permalink to this headline">¶</a></h3>
+<p>This will be used in couchdb and in python so only valid python identifiers can be used. It will also be used in html forms.</p>
+</div>
+<div class="section" id="title-description">
+<h3>title &amp; description<a class="headerlink" href="#title-description" title="Permalink to this headline">¶</a></h3>
+<p>Used as meta data (for instance, title will override the name for the label in formish)</p>
+</div>
+<div class="section" id="type">
+<h3>type<a class="headerlink" href="#type" title="Permalink to this headline">¶</a></h3>
+<p>Any schemaish types. We should probably use the same format as the type itself (i.e. String, DateParts) in order to keep consistency.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">should type default to string - I think so personally</p>
+</div>
+</div>
+<div class="section" id="validator">
+<h3>validator<a class="headerlink" href="#validator" title="Permalink to this headline">¶</a></h3>
+<p>This is a single validator or combination.. This will be eval&#8221;d but checked to be valid first (i.e. no arbitrary execution of python). e.g.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="s2">&quot;Required()&quot;</span>
+<span class="p">}</span>
+
+
+<span class="p">{</span>
+  <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="s2">&quot;Any(Integer(), Float())&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="adding-widgets">
+<h2>Adding Widgets<a class="headerlink" href="#adding-widgets" title="Permalink to this headline">¶</a></h2>
+<p>widgets are added as below</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">pythonidentifier</span><span class="o">,</span>
+      <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="nx">short_string</span><span class="o">,</span>
+      <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="nx">long_string</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="nx">schema_type</span><span class="o">,</span>
+      <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="nx">validatish_validator</span><span class="o">,</span>
+      <span class="s2">&quot;widget&quot;</span><span class="o">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="nx">widget_type</span><span class="o">,</span>
+          <span class="p">....</span> <span class="nx">any</span> <span class="nx">keyword</span> <span class="nx">or</span> <span class="nx">positional</span> <span class="nx">arguments</span><span class="o">,</span> <span class="nx">use</span> <span class="nx">arg</span> <span class="nx">name</span> <span class="k">for</span> <span class="nx">positionals</span> <span class="p">...</span>
+
+          <span class="p">}</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span><span class="o">,</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="some-examples">
+<h2>Some examples<a class="headerlink" href="#some-examples" title="Permalink to this headline">¶</a></h2>
+<p>Here are a few examples</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;widget&quot;</span><span class="o">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;SelectChoice&quot;</span><span class="o">,</span>
+          <span class="s2">&quot;options&quot;</span><span class="o">:</span> <span class="p">[(</span><span class="s2">&quot;mr&quot;</span><span class="o">,</span><span class="s2">&quot;Mr&quot;</span><span class="p">)</span><span class="o">,</span><span class="p">(</span><span class="s2">&quot;mrs&quot;</span><span class="o">,</span><span class="s2">&quot;Mrs&quot;</span><span class="p">)</span><span class="o">,</span><span class="p">(</span><span class="s2">&quot;miss&quot;</span><span class="o">,</span><span class="s2">&quot;Miss&quot;</span><span class="p">)]</span><span class="o">,</span>
+          <span class="s2">&quot;none_option&quot;</span><span class="o">:</span> <span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="o">,</span><span class="s2">&quot;--select your title--&quot;</span><span class="p">)</span><span class="o">,</span>
+          <span class="p">}</span>
+
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;first_name&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="s2">&quot;First Name&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="s2">&quot;Required()&quot;</span>
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;interests&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;Sequence(String())&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;widget&quot;</span><span class="o">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;CheckboxMultiChoice&quot;</span><span class="o">,</span>
+          <span class="s2">&quot;options&quot;</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;golf&quot;</span><span class="o">,</span><span class="s2">&quot;quantum physics&quot;</span><span class="o">,</span><span class="s2">&quot;knitting&quot;</span><span class="p">]</span><span class="o">,</span>
+          <span class="p">}</span>
+    <span class="p">}</span><span class="o">,</span>
+
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-with-couchish">
+<h2>Using with Couchish<a class="headerlink" href="#using-with-couchish" title="Permalink to this headline">¶</a></h2>
+<p>If we want to include references to other objects, we need to make sure we can point to them.. e.g. The select for title in the first part</p>
+<p>here is a simple example of a book refering to an author</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;String()&quot;</span><span class="o">,</span>
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;author&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;Reference()&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;refersto&quot;</span><span class="o">:</span> <span class="s2">&quot;author_name&quot;</span>
+    <span class="p">}</span><span class="o">,</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;views&quot;</span><span class="o">:</span> <span class="p">[</span>
+
+  <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;author_name&quot;</span><span class="o">,</span>
+    <span class="s2">&quot;url&quot;</span><span class="o">:</span> <span class="s2">&quot;author/name_by_id&quot;</span><span class="o">,</span>
+    <span class="s2">&quot;uses&quot;</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;author.first_name&quot;</span><span class="o">,</span><span class="s2">&quot;author.last_name&quot;</span><span class="p">]</span>
+  <span class="p">}</span>
+<span class="p">]</span><span class="o">,</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="representing-a-book-author-relationship">
+<h3>Representing a Book - Author relationship<a class="headerlink" href="#representing-a-book-author-relationship" title="Permalink to this headline">¶</a></h3>
+<p>Here is a more complicated version where we have a book and an author .. The books author uses a view to pull in the reference. This creates dictionary structure for the <tt class="docutils literal"><span class="pre">author</span></tt> that I&#8221;ve shown at the end of this section.</p>
+<p><tt class="docutils literal"><span class="pre">book</span></tt></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title&quot;</span><span class="o">,</span>
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;author&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;Reference()&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;refersto&quot;</span><span class="o">:</span> <span class="s2">&quot;author_name&quot;</span><span class="o">,</span>
+    <span class="p">}</span><span class="o">,</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">author</span></tt></p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;title&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;widget&quot;</span><span class="o">:</span> <span class="p">{</span>
+          <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;SelectChoice&quot;</span><span class="o">,</span>
+          <span class="s2">&quot;options&quot;</span><span class="o">:</span> <span class="p">[(</span><span class="s2">&quot;mr&quot;</span><span class="o">,</span><span class="s2">&quot;Mr&quot;</span><span class="p">)</span><span class="o">,</span><span class="p">(</span><span class="s2">&quot;mrs&quot;</span><span class="o">,</span><span class="s2">&quot;Mrs&quot;</span><span class="p">)</span><span class="o">,</span><span class="p">(</span><span class="s2">&quot;miss&quot;</span><span class="o">,</span><span class="s2">&quot;Miss&quot;</span><span class="p">)]</span><span class="o">,</span>
+          <span class="s2">&quot;none_option&quot;</span><span class="o">:</span> <span class="p">(</span><span class="s2">&quot;None&quot;</span><span class="o">,</span><span class="s2">&quot;--select your title--&quot;</span><span class="p">)</span><span class="o">,</span>
+          <span class="p">}</span>
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;first_name&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="s2">&quot;First Name&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="s2">&quot;Required()&quot;</span>
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;last_name&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="s2">&quot;Last Name&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;validator&quot;</span><span class="o">:</span> <span class="s2">&quot;Required()&quot;</span>
+    <span class="p">}</span><span class="o">,</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;birthday&quot;</span><span class="o">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;Date()&quot;</span><span class="o">,</span>
+    <span class="p">}</span><span class="o">,</span>
+
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">views</span></tt></p>
+<div class="highlight-python"><pre>{"views": [
+
+  {
+    "name": "author_name",
+    "url": "author/name_by_id",
+    "map" : "function(doc) { if (doc.model_type=='author') { emit(doc._id,  {first_name: doc.first_name, last_name: doc.last_name} ); } }"
+    "uses": ["author.first_name","author.last_name"],
+  }
+],
+
+}</pre>
+</div>
+</div>
+<div class="section" id="an-example-book-json-structure">
+<h3>An example book json structure<a class="headerlink" href="#an-example-book-json-structure" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;author&quot;</span><span class="o">:</span> <span class="p">{</span>
+     <span class="s2">&quot;_ref&quot;</span><span class="o">:</span> <span class="s2">&quot;42e29d907e04087a8ab1e40cc467a259&quot;</span><span class="o">,</span>
+     <span class="s2">&quot;first_name&quot;</span><span class="o">:</span> <span class="s2">&quot;Isaac&quot;</span><span class="o">,</span>
+     <span class="s2">&quot;last_name&quot;</span><span class="o">:</span> <span class="s2">&quot;Asimov&quot;</span><span class="o">,</span>
+     <span class="p">}</span>
+  <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="s2">&quot;I, Robot&quot;</span><span class="o">,</span>
+<span class="p">}</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;title&quot;</span><span class="o">:</span> <span class="s2">&quot;Mr&quot;</span><span class="o">,</span>
+  <span class="s2">&quot;first_name&quot;</span><span class="o">:</span> <span class="s2">&quot;Isaac&quot;</span><span class="o">,</span>
+  <span class="s2">&quot;last_name&quot;</span><span class="o">:</span> <span class="s2">&quot;Asimov&quot;</span><span class="o">,</span>
+  <span class="s2">&quot;birthday&quot;</span><span class="o">:</span> <span class="s2">&quot;1936-09-01&quot;</span><span class="o">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="and-the-yaml-data-that-builds-it">
+<h3>And the yaml data that builds it<a class="headerlink" href="#and-the-yaml-data-that-builds-it" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml"><div class="highlight"><pre><span class="l-Scalar-Plain">book</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">fields</span><span class="p-Indicator">:</span>
+    <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">title</span>
+    <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">Reference()</span>
+      <span class="l-Scalar-Plain">view</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author_name</span>
+
+<span class="l-Scalar-Plain">author</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">fields</span><span class="p-Indicator">:</span>
+    <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">first_name</span>
+    <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">last_name</span>
+    <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">birthday</span>
+      <span class="l-Scalar-Plain">type</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">date</span>
+
+
+<span class="l-Scalar-Plain">views</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author_name</span>
+    <span class="l-Scalar-Plain">url</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author/name_by_id</span>
+    <span class="l-Scalar-Plain">map</span> <span class="p-Indicator">:</span> <span class="l-Scalar-Plain">function(doc) { if (doc.model_type==&#39;author&#39;) { emit(doc._id,  {first_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doc.first_name, last_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doc.last_name} ); } }</span>
+    <span class="l-Scalar-Plain">uses</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">author.first_name</span><span class="p-Indicator">,</span> <span class="nv">author.last_name</span><span class="p-Indicator">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="shortcuts">
+<h3>Shortcuts<a class="headerlink" href="#shortcuts" title="Permalink to this headline">¶</a></h3>
+<p>You can let couchish work out the url automatically or even just provide a designdoc namespace</p>
+<p><tt class="docutils literal"><span class="pre">automatic</span></tt></p>
+<div class="highlight-yaml"><div class="highlight"><pre><span class="l-Scalar-Plain">views</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author_name</span>
+    <span class="l-Scalar-Plain">map</span> <span class="p-Indicator">:</span> <span class="l-Scalar-Plain">function(doc) { if (doc.model_type==&#39;author&#39;) { emit(doc._id,  {first_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doc.first_name, last_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doc.last_name} ); } }</span>
+    <span class="l-Scalar-Plain">uses</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">author.first_name</span><span class="p-Indicator">,</span> <span class="nv">author.last_name</span><span class="p-Indicator">]</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">supply</span> <span class="pre">the</span> <span class="pre">design</span> <span class="pre">doc</span></tt></p>
+<div class="highlight-yaml"><div class="highlight"><pre><span class="l-Scalar-Plain">views</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author_name</span>
+    <span class="l-Scalar-Plain">designdoc</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author</span>
+    <span class="l-Scalar-Plain">map</span> <span class="p-Indicator">:</span> <span class="l-Scalar-Plain">function(doc) { if (doc.model_type==&#39;author&#39;) { emit(doc._id,  {first_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doc.first_name, last_name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">doc.last_name} ); } }</span>
+    <span class="l-Scalar-Plain">uses</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">author.first_name</span><span class="p-Indicator">,</span> <span class="nv">author.last_name</span><span class="p-Indicator">]</span>
+</pre></div>
+</div>
+<p>You can also let couchish build the map if you want (this only works if the map is just nested dictionary accessors of a single model type</p>
+<div class="highlight-yaml"><div class="highlight"><pre><span class="l-Scalar-Plain">views</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">author_name</span>
+    <span class="l-Scalar-Plain">uses</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">author.first_name</span><span class="p-Indicator">,</span> <span class="nv">author.last_name</span><span class="p-Indicator">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Schema for Schema Definition</a><ul>
+<li><a class="reference external" href="#schema-schema">Schema Schema</a><ul>
+<li><a class="reference external" href="#name">name</a></li>
+<li><a class="reference external" href="#title-description">title &amp; description</a></li>
+<li><a class="reference external" href="#type">type</a></li>
+<li><a class="reference external" href="#validator">validator</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#adding-widgets">Adding Widgets</a></li>
+<li><a class="reference external" href="#some-examples">Some examples</a></li>
+<li><a class="reference external" href="#using-with-couchish">Using with Couchish</a><ul>
+<li><a class="reference external" href="#representing-a-book-author-relationship">Representing a Book - Author relationship</a></li>
+<li><a class="reference external" href="#an-example-book-json-structure">An example book json structure</a></li>
+<li><a class="reference external" href="#and-the-yaml-data-that-builds-it">And the yaml data that builds it</a></li>
+<li><a class="reference external" href="#shortcuts">Shortcuts</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/future.txt">Show Source</a></li>
+            </ul>
+          <h3>Quick search</h3>
+            <form class="search" action="search.html" method="get">
+              <input type="text" name="q" size="18" /> <input type="submit" value="Go" />
+              <input type="hidden" name="check_keywords" value="yes" />
+              <input type="hidden" name="area" value="default" />
+            </form>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="index.html">couchish v0.5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Tim Parkin &amp; Matt Goodall.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.5.1.
+    </div>
+  </body>
+</html>
