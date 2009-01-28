@@ -1,5 +1,5 @@
 import unittest
-from couchish.couchish_jsonbuilder import build, get_views
+from couchish.couchish_jsonbuilder import get_views
 import yaml
 from sets import Set
 from couchish import categories
@@ -31,9 +31,6 @@ class Test(unittest.TestCase):
         author_definition = yaml.load( open(DATADIR%'test_couchish_author.yaml').read() )
         views_definition = yaml.load( open(DATADIR%'test_couchish_views.yaml').read() )
 
-        form = build(book_definition)
-        assert form.structure.attr.attrs[1][1].refersto == 'author_name'
-
         models_definition = {'book': book_definition, 'author': author_definition,'post': post_definition, 'dvd': dvd_definition}
         viewdata = get_views(models_definition, views_definition)
         assert viewdata['viewnames_by_attribute'] == {'author.first_name': Set(['author_name']), 'author.last_name': Set(['author_surname', 'author_name'])}
@@ -58,7 +55,7 @@ class Test(unittest.TestCase):
         
         viewdata = get_views(models_definition, views_definition)
         assert simplifyjs(viewdata['views']['author/by_last_name']) == "function(doc){if(doc.model_type=='author'){emit(doc.last_name,null)}}"
-        assert viewdata['views']['post/all'] == "function(doc) { if (doc.model_type == 'post')  emit(doc._id, null) }"
+        assert simplifyjs(viewdata['views']['post/all']) == "function(doc){if(doc.model_type=='post'){emit(doc._id,null)}"
 
     def test_categories_creation(self):
         categories_definition = yaml.load( open(DATADIR%'categories.yaml').read() )
@@ -80,6 +77,19 @@ class Test(unittest.TestCase):
             view.get_doc(self.db)
             view.sync(self.db)
 
+
+    def test_autoviews(self):
+        post_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_post.yaml').read() )
+        author_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_author.yaml').read() )
+        views_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_views.yaml').read() )
+
+        models_definition = {'author': author_definition, 'post': post_definition}
+        
+        viewdata = get_views(models_definition, views_definition)
+        views = viewdata['views']
+
+        assert simplifyjs(views['couchish/author_name']) == "function(doc){if(doc.model_type=='author'){emit(doc._id,{first_name:doc.first_name,last_name:doc.last_name})}}"
+        assert simplifyjs(views['couchish/author_name-rev']) == "function(doc){if(doc.model_type=='post'){emit(doc.author._ref,null)}}"
 
 
         
