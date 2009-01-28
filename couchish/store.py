@@ -46,6 +46,21 @@ class CouchishStoreSession(object):
         self.store = store
         self.session = session.Session(store.db, post_flush_hook=self._post_flush_hook)
 
+    def __enter__(self):
+        """
+        "with" statement entry.
+        """
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """
+        "with" statement exit.
+        """
+        if type is None:
+            self.flush()
+        else:
+            self.reset()
+
     def create(self, doc):
         """
         Create a document.
@@ -107,6 +122,12 @@ class CouchishStoreSession(object):
         Flush the session.
         """
         return self.session.flush()
+
+    def reset(self):
+        """
+        Reset the session, forgetting everything it knows.
+        """
+        self.session.reset()
 
     def _post_flush_hook(self, session, deletions, additions, changes):
 
