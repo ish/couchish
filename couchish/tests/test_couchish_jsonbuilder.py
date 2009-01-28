@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
         
         viewdata = get_views(models_definition, views_definition)
         assert simplifyjs(viewdata['views']['author/by_last_name']) == "function(doc){if(doc.model_type=='author'){emit(doc.last_name,null)}}"
-        assert viewdata['views']['post/all'] == "function(doc) { if (doc.model_type == 'post')  emit(doc._id, null) }"
+        assert simplifyjs(viewdata['views']['post/all']) == "function(doc){if(doc.model_type=='post'){emit(doc._id,null)}"
 
     def test_categories_creation(self):
         categories_definition = yaml.load( open(DATADIR%'categories.yaml').read() )
