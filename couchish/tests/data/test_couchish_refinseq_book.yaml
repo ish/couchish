@@ -1,0 +1,9 @@
+fields:
+- name: title
+
+- name: authors
+  type: Sequence(Reference())
+  refersto: author_name
+
+
+

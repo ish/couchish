@@ -108,6 +108,26 @@ class CouchishStoreSession(object):
         """
         return self.session.flush()
 
+    def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=[]):
+
+        if segments == []:
+            if ref_doc['_ref'] == ref_data['_ref']:
+                ref_doc.update(ref_data)
+        else:
+            current = segments.pop(0)
+            if current.endswith('*'):
+                is_seq = True
+            else:
+                is_seq = False
+            current = current.replace('*','')
+            prefix.append(current)
+            current_ref = ref_doc[current]
+            if is_seq:
+                for ref_doc_ref in current_ref:
+                    self._find_and_match_nested_item(ref_doc_ref, segments, ref_data, prefix)
+            else:
+                self._find_and_match_nested_item(current_ref, segments, ref_data, prefix)
+
     def _post_flush_hook(self, session, deletions, additions, changes):
 
         # Sentinel to indicate we haven't retrieved the ref view data yet.
@@ -121,7 +141,7 @@ class CouchishStoreSession(object):
         # Updates any documents that refer to documents that have been changed.
         for doc, actions in changes:
             doc_type = doc['model_type']
-            edited = set('.'.join([doc_type, '.'.join(action['path'])])
+            edited = set('.'.join([doc_type, '.'.join(str(p) for p in action['path'])])
                          for action in actions if action['action'] == 'edit')
             # Build a set of all the views affected by the changed attributes.
             views = set()
@@ -142,9 +162,11 @@ class CouchishStoreSession(object):
                         ref_data = self.view(view_url, startkey=ref_key, limit=1).rows[0].value
                         ref_data['_ref'] = ref_key
                     for attr in attrs_by_type[ref_doc['model_type']]:
-                        _set_nested_item(ref_doc, attr.split('.'), ref_data)
+                        ## OLD - _set_nested_item(ref_doc, attr.split('.'), ref_data)
+                        # Any of the attrs sections could be a sequence.. we need to iterate over them all to find matches.. 
+                        # e.g. we may have authors*. or metadata*.authors*
+                        self._find_and_match_nested_item(ref_doc, attr.split('.'), ref_data)
 
 
-def _set_nested_item(obj, path, value):
-    operator.setitem(reduce(operator.getitem, path[:-1], obj), path[-1], value)
+
 

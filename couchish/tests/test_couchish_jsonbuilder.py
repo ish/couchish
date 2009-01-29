@@ -6,7 +6,6 @@ from couchish import categories
 import couchdb
 from couchdb.design import ViewDefinition
 
-from pprint import pprint #### XXX
 
 DATADIR = 'couchish/tests/data/%s'
 
@@ -56,6 +55,8 @@ class Test(unittest.TestCase):
         models_definition = {'author': author_definition, 'post': post_definition}
         
         viewdata = get_views(models_definition, views_definition)
+        from pprint import pprint
+        pprint( simplifyjs(viewdata['views']['author/by_last_name']))
         assert simplifyjs(viewdata['views']['author/by_last_name']) == "function(doc){if(doc.model_type=='author'){emit(doc.last_name,null)}}"
         assert simplifyjs(viewdata['views']['post/all']) == "function(doc){if(doc.model_type=='post'){emit(doc._id,null)}}"
 
@@ -94,7 +95,6 @@ class Test(unittest.TestCase):
         assert simplifyjs(views['couchish/author_name-rev']) == "function(doc){if(doc.model_type=='post'){emit(doc.author._ref,null)}}"
 
 
-        #pprint (views['couchish/author_name'])
 
 
         

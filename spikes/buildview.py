@@ -1,9 +1,5 @@
 from string import Template
 
-views_by_uses = {'couchish/author_name-rev': {'book': ['metadata.*.authors.*'],'post':['foo.*.bar.*.arg','arg.*.foo']}}
-view = {'book': ['metadata.*.authors.*'],'post':['foo.*.bar.arg.*.koo','arg.*.foo']}
-
-
 def buildview(view):
     """
     function (doc) {
@@ -31,8 +27,7 @@ $body
     for_template = Template( \
 """            for (var i$n in doc$attr) {
 $body
-            }
-""")
+            }""")
 
     emit_template = Template( \
 """                emit(doc$attr._ref, null);""")
@@ -45,7 +40,7 @@ $body
             segments = attr.replace('.*','*').split('.')
             cleansegments = attr.replace('.*','').split('.')
             out_attr = ''
-            templ_fors = '$body'
+            templ_fors = '$body\n'
             for n,segment in enumerate(segments):
                 if segment.endswith('*'):
                     out_loop_var = out_attr + '.%s'%cleansegments[n]
@@ -62,4 +57,3 @@ $body
     return main_template.substitute(body=out)
 
 
-print buildview(view)

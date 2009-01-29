@@ -64,7 +64,7 @@ def expand_definition(pre_expand_definition):
         item = {}
         item['key'] = strip_stars(field['name'])
         item['type'] = field.get('type','String()')
-        item['view'] = field.get('view', None)
+        item['refersto'] = field.get('refersto', None)
         definition.append(item) 
     return definition
 

@@ -1,0 +1,15 @@
+- name: author_name
+  uses: [author.first_name, author.last_name]
+
+- name: author_surname
+  uses: author.last_name
+
+- name: books_by_author_and_title
+  url: mg/books_by_author_and_title
+  map: |
+    function(doc) {
+        if (doc.model_type == 'book') {
+            emit([doc.writtenby.last_name, doc.writtenby.first_name, doc.title], null);
+        }
+    }
+
