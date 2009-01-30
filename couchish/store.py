@@ -5,7 +5,6 @@ Views we can build:
     * ref and ref reversed views, one pair per relationship
 """
 
-import operator
 from couchdb.design import ViewDefinition
 
 from couchdbsession import session
@@ -209,7 +208,4 @@ class CouchishStoreSession(object):
                         # Any of the attrs sections could be a sequence.. we need to iterate over them all to find matches.. 
                         # e.g. we may have authors*. or metadata*.authors*
                         self._find_and_match_nested_item(ref_doc, attr.split('.'), ref_data)
-
-
-
 

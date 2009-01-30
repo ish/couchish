@@ -1,4 +1,3 @@
-import operator
 import simplejson as json
 
 def setitem(v, k):
