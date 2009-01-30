@@ -219,7 +219,6 @@ class CouchishStoreSession(object):
                         ref_data = self.view(view_url, startkey=ref_key, limit=1).rows[0].value
                         ref_data['_ref'] = ref_key
                     for attr in attrs_by_type[ref_doc['model_type']]:
-                        ## OLD - _set_nested_item(ref_doc, attr.split('.'), ref_data)
                         # Any of the attrs sections could be a sequence.. we need to iterate over them all to find matches.. 
                         # e.g. we may have authors*. or metadata*.authors*
                         self._find_and_match_nested_item(ref_doc, attr.split('.'), ref_data)
