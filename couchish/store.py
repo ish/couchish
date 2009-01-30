@@ -11,6 +11,18 @@ from couchdb.design import ViewDefinition
 from couchdbsession import session
 
 
+class CouchishError(Exception):
+    pass
+
+
+class NotFound(CouchishError):
+    pass
+
+
+class TooMany(CouchishError):
+    pass
+
+
 class CouchishStore(object):
 
     def __init__(self, db, config):
@@ -83,6 +95,16 @@ class CouchishStoreSession(object):
         Return a single document, given it's ID.
         """
         return self.session.get(id)
+
+    def doc_by_view(self, view, key):
+        results = self.session.view(view, startkey=key, endkey=key, limit=2,
+                                    include_docs=True)
+        rows = results.rows
+        if len(rows) == 0:
+            raise NotFound()
+        elif len(rows) == 2:
+            raise TooMany()
+        return rows[0].doc
 
     def docs_by_id(self, ids, **options):
         """
