@@ -99,6 +99,7 @@ def get_views(models_definition, views_definition):
                 view['url'] = '%s/%s'%(view['designdoc'],view['name'])
         views_by_viewname[view['name']] = {'url':view['url'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
         if 'map' in view:
+            views_by_viewname[view['name']]['map'] = view['map']
             views[view['url']] = view['map']
 
 
