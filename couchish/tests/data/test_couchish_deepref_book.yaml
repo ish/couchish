@@ -1,0 +1,15 @@
+fields:
+- name: title
+
+- name: metadata
+  type: Structure()
+
+- name: metadata.writtenby
+  type: Reference()
+  refersto: author_name
+
+- name: metadata.coauthored
+  type: Reference()
+  refersto: author_surname
+
+

@@ -6,6 +6,7 @@ from couchish import categories
 import couchdb
 from couchdb.design import ViewDefinition
 
+
 DATADIR = 'couchish/tests/data/%s'
 
 def simplifyjs(string):
@@ -54,8 +55,10 @@ class Test(unittest.TestCase):
         models_definition = {'author': author_definition, 'post': post_definition}
         
         viewdata = get_views(models_definition, views_definition)
+        from pprint import pprint
+        pprint( simplifyjs(viewdata['views']['author/by_last_name']))
         assert simplifyjs(viewdata['views']['author/by_last_name']) == "function(doc){if(doc.model_type=='author'){emit(doc.last_name,null)}}"
-        assert simplifyjs(viewdata['views']['post/all']) == "function(doc){if(doc.model_type=='post'){emit(doc._id,null)}"
+        assert simplifyjs(viewdata['views']['post/all']) == "function(doc){if(doc.model_type=='post'){emit(doc._id,null)}}"
 
     def test_categories_creation(self):
         categories_definition = yaml.load( open(DATADIR%'categories.yaml').read() )
@@ -90,6 +93,8 @@ class Test(unittest.TestCase):
 
         assert simplifyjs(views['couchish/author_name']) == "function(doc){if(doc.model_type=='author'){emit(doc._id,{first_name:doc.first_name,last_name:doc.last_name})}}"
         assert simplifyjs(views['couchish/author_name-rev']) == "function(doc){if(doc.model_type=='post'){emit(doc.author._ref,null)}}"
+
+
 
 
         
