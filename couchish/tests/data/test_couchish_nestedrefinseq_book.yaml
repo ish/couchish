@@ -1,0 +1,10 @@
+fields:
+- name: title
+
+- name: authors
+  type: Sequence(Structure())
+
+- name: authors.*.nested
+  type: Reference()
+  refersto: author_name
+

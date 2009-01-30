@@ -153,13 +153,19 @@ class CouchishStoreSession(object):
         """
         return self.session.flush()
 
-    def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=[]):
+    def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=None):
+
+        # Initialise of copy the prefix list, because we're about to change it.
+        if prefix is None:
+            prefix = []
+        else:
+            prefix = list(prefix)
 
         if segments == []:
             if ref_doc['_ref'] == ref_data['_ref']:
                 ref_doc.update(ref_data)
         else:
-            current = segments.pop(0)
+            current, segments = segments[0], segments[1:]
             if current.endswith('*'):
                 is_seq = True
             else:
