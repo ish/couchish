@@ -13,16 +13,16 @@ class Test(unittest.TestCase):
 
     def test_simple(self):
         schema = build_schema('test_simple.yaml')
-        assert 'schemaish.attr.Structure' in repr(schema)
+        assert 'schemaish.Structure' in repr(schema)
         assert len(schema.attrs) == 3
         keys = [ k for k,v in schema.attrs]
         assert keys == ['first_name','last_name','birthday']
         first_name = schema.attrs[0][1]
         last_name = schema.attrs[1][1]
         birthday = schema.attrs[2][1]
-        assert 'schemaish.attr.String' in repr(first_name)
-        assert 'schemaish.attr.String' in repr(last_name)
-        assert 'schemaish.attr.Date' in repr(birthday)
+        assert 'schemaish.String' in repr(first_name)
+        assert 'schemaish.String' in repr(last_name)
+        assert 'schemaish.Date' in repr(birthday)
 
     def test_types(self):
         schema = build_schema('test_types.yaml')
@@ -42,37 +42,37 @@ class Test(unittest.TestCase):
 
     def test_substructure(self):
         schema = build_schema('test_substructure.yaml')
-        assert 'schemaish.attr.Structure' in repr(schema)
+        assert 'schemaish.Structure' in repr(schema)
         assert len(schema.attrs) == 3
         keys = [ k for k,v in schema.attrs]
         assert keys == ['first_name','last_name','address']
         first_name = schema.attrs[0][1]
         last_name = schema.attrs[1][1]
         address = schema.attrs[2][1]
-        assert 'schemaish.attr.String' in repr(first_name)
-        assert 'schemaish.attr.String' in repr(last_name)
-        assert 'schemaish.attr.Structure' in repr(address)
+        assert 'schemaish.String' in repr(first_name)
+        assert 'schemaish.String' in repr(last_name)
+        assert 'schemaish.Structure' in repr(address)
         address = address.attrs
         assert len(address) == 4
         for attr in address:
-            assert 'schemaish.attr.String' in repr(attr[1])
+            assert 'schemaish.String' in repr(attr[1])
 
         
     def test_sequence(self):
         schema = build_schema('test_sequence.yaml')
         countries = schema.attrs[2][1]
-        assert 'schemaish.attr.Sequence' in repr(countries)
-        assert 'schemaish.attr.String' in repr(countries.attr)
+        assert 'schemaish.Sequence' in repr(countries)
+        assert 'schemaish.String' in repr(countries.attr)
 
 
     def test_sequenceofstructs(self):
         schema = build_schema('test_sequenceofstructures.yaml')
         addresses = schema.attrs[2][1]
-        assert 'schemaish.attr.Sequence' in repr(addresses)
+        assert 'schemaish.Sequence' in repr(addresses)
         address = addresses.attr.attrs
         assert len(address) == 4
         for attr in address:
-            assert 'schemaish.attr.String' in repr(attr[1])
+            assert 'schemaish.String' in repr(attr[1])
 
 
 

@@ -9,6 +9,8 @@ from couchdb.design import ViewDefinition
 
 from couchdbsession import session
 
+from dottedish import dotted
+from copy import copy
 
 class CouchishError(Exception):
     """
@@ -29,6 +31,48 @@ class TooMany(CouchishError):
     Too may documents were found.
     """
     pass
+
+
+def get_files(data, original=None, prefix=None):
+    files = {}
+    if not isinstance(data, dict):
+        return data, files
+    dd = dotted(data)
+    if isinstance(original, dict):
+        ddoriginal = dotted(original)
+    for k in dd.dottedkeys():
+        try:
+            kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
+            if lastk == '__type__' and dd[k] == 'file':
+                if kparent == '':
+                    f = dd
+                else:
+                    f = dd[kparent]
+                if f['file'] is None and f['filename'] is None and f['mimetype'] is None:
+                    # if we have no original then the result is None 
+                    # XXX this is possibly a hack to cope with formish returning no data?
+                    if original is None or not isinstance(ddoriginal, dict):
+                        f = None
+                    # otherwise the result is unchanged
+                    else:
+                        if kparent == '':
+                            f = ddoriginal
+                        else:
+                            f = ddoriginal[kparent]
+                else:
+                    # remove the file data from document and add to files for attachment handling
+                    if prefix is None:
+                        files[kparent] = copy(f.data)
+                    else:
+                        segments = [str(segment) for segment in prefix]
+                        if kparent != '':
+                            segments += kparent.split('.')
+                        attr = '.'.join( segments )
+                        files[attr] = copy(f.data)
+                    del f['file']
+        except TypeError:
+            continue
+    return dd.data, files
 
 
 class CouchishStore(object):
@@ -64,7 +108,10 @@ class CouchishStoreSession(object):
 
     def __init__(self, store):
         self.store = store
-        self.session = session.Session(store.db, post_flush_hook=self._post_flush_hook)
+        self.session = session.Session(store.db,
+              pre_flush_hook=self._pre_flush_hook,
+              post_flush_hook=self._post_flush_hook)
+        self.files = []
 
     def __enter__(self):
         """
@@ -151,7 +198,38 @@ class CouchishStoreSession(object):
         """
         Flush the session.
         """
-        return self.session.flush()
+        returnvalue =  self.session.flush()
+        files = self.files
+        filesandrevs = []
+        for id, attrfiles in self.files.items():
+            doc = self.session.get(id)
+            for attr, f in attrfiles.items():
+                self.session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, f['file'].read(), filename=attr, content_type=f['mimetype'])
+
+        return returnvalue
+
+
+    def _pre_flush_hook(self, session, deletions, additions, changes):
+        additions = list(additions)
+        allfiles = {}
+        additions = list(additions)
+        for addition in additions:
+            addition, files = get_files(addition)
+            if files:
+                allfiles.setdefault(addition['_id'],{}).update(files)
+
+
+        changes = list(changes)
+        for n, changeset in enumerate(changes):
+            d, cs = changeset
+            cs = list(cs)
+            for m, c in enumerate(cs):
+                c['value'], files = get_files(c['value'], original=c['was'], prefix=c['path'])
+                cs[m] = c
+                if files:
+                    allfiles.setdefault(d['_id'],{}).update(files)
+            changes[n] = (d, cs)
+        self.files = allfiles
 
     def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=None):
 

@@ -158,6 +158,8 @@ class SchemaishTypeRegistry(object):
                 'Boolean()': self.boolean_factory,
                 'Decimal()': self.decimal_factory,
                 'Date()': self.date_factory,
+                'Time()': self.time_factory,
+                'DateTime()': self.datetime_factory,
                 'File()': self.file_factory,
                 'Sequence(String())': self.list_factory('String()'),
                 'Sequence(Integer())': self.list_factory('Integer()'),
@@ -201,6 +203,11 @@ class SchemaishTypeRegistry(object):
     def date_factory(self, **k):
         return schemaish.Date(**k)
 
+    def time_factory(self, **k):
+        return schemaish.Time(**k)
+
+    def datetime_factory(self, **k):
+        return schemaish.DateTime(**k)
 
     def file_factory(self, **k):
         return schemaish.File(**k)

@@ -61,6 +61,30 @@ class Test(unittest.TestCase):
                             'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'},
                             'coauthored': {'_ref': tim_id, 'last_name': 'Parkin'}}
 
+    def test_simple_reference_addingdictionary(self):
+        sess = self.S.session()
+        matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall'}
+        matt_id = sess.create(matt)
+        tim = {'model_type': 'author', 'first_name': 'Tim', 'last_name': 'Parkin'}
+        tim_id = sess.create(tim)
+        book = {'model_type': 'book', 'title': 'Title',
+                     'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Goodall'},
+                     'coauthored': {'_ref': tim_id, 'last_name': 'Parkin'}}
+        book_id = sess.create(book)
+        sess.flush()
+
+        sess = self.S.session()
+        matt = sess.doc_by_id(matt_id)
+        matt['last_name'] = {'firstpart':'Woo','lastpart':'dall'}
+        sess.flush()
+
+        matt = strip_id_rev(self.db[matt_id])
+        book = strip_id_rev(self.db[book_id])
+        assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': {'firstpart':'Woo','lastpart':'dall'}}
+        assert book == {'model_type': 'book', 'title': 'Title',
+                 'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': {'firstpart':'Woo','lastpart':'dall'}},
+                 'coauthored': {'_ref': tim_id, 'last_name': 'Parkin'}}
+
     def test_multiple_changes(self):
         sess = self.S.session()
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall'}
@@ -269,3 +293,67 @@ class TestNestedRefsInNestedSequences(unittest.TestCase):
         book = strip_id_rev(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'people': [{'authors': [ {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}, {'nested': {'_ref': matt_id, 'first_name':'Matt','last_name': 'Woodall'}}]}]}
+
+
+
+class TestFiles(unittest.TestCase):
+
+    def setUp(self):
+        server = couchdb.Server()
+        if db_name in server:
+            del server[db_name]
+        self.db = server.create(db_name)
+        self.S = store.CouchishStore(self.db, config.Config.from_yaml(
+            dict((name,type_filename(name)) for name in ['book', 'author', 'post', 'dvd']),
+            data_filename('test_couchish_views.yaml')
+            ))
+        self.S.sync_views()
+
+
+    def test_addition_file(self):
+        from schemaish.type import File
+        sess = self.S.session()
+        f = open('couchish/tests/data/test.txt','r')
+        matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo':
+            {'__type__': 'file',
+             'file': f,
+             'filename':'test.txt',
+             'mimetype':'text/plain'} }
+        matt_id = sess.create(matt)
+        sess.flush()
+        f.close()
+
+
+    def test_change_file(self):
+        from schemaish.type import File
+        sess = self.S.session()
+        f = open('couchish/tests/data/test.txt','r')
+        matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo':
+            {'__type__': 'file',
+             'file': f,
+             'filename':'test.txt',
+             'mimetype':'text/plain'} }
+        matt_id = sess.create(matt)
+        sess.flush()
+        f.close()
+
+        sess = self.S.session()
+        attachment = sess.session._db.get_attachment(matt_id, 'photo')
+        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+
+        sess = self.S.session()
+        matt = sess.doc_by_id(matt_id)
+        f = open('couchish/tests/data/test-changed.txt','r')
+        matt['photo'] = {'__type__': 'file',
+             'file': f,
+             'filename':'test.txt',
+             'mimetype':'text/plain'}
+        sess.flush()
+        f.close()
+
+        sess = self.S.session()
+        attachment = sess.session._db.get_attachment(matt_id, 'photo')
+        assert attachment == 'and now it\'s changed\n'
+
+
+
