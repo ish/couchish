@@ -111,7 +111,7 @@ class CouchishStoreSession(object):
         self.session = session.Session(store.db,
               pre_flush_hook=self._pre_flush_hook,
               post_flush_hook=self._post_flush_hook)
-        self.files = []
+        self.files = {}
 
     def __enter__(self):
         """
@@ -224,10 +224,11 @@ class CouchishStoreSession(object):
             d, cs = changeset
             cs = list(cs)
             for m, c in enumerate(cs):
-                c['value'], files = get_files(c['value'], original=c['was'], prefix=c['path'])
-                cs[m] = c
-                if files:
-                    allfiles.setdefault(d['_id'],{}).update(files)
+                if c['action'] in ['edit','create']:
+                    c['value'], files = get_files(c['value'], original=c.get('was'), prefix=c['path'])
+                    cs[m] = c
+                    if files:
+                        allfiles.setdefault(d['_id'],{}).update(files)
             changes[n] = (d, cs)
         self.files = allfiles
 
