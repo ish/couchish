@@ -109,6 +109,10 @@ def get_views(models_definition, views_definition):
         for field in definition['fields']:
             # some uses need to know whether the attr is composed of any sequences
             field['key'] = strip_stars(field['name'])
+            if field.get('type','').startswith('Sequence'):
+                fieldname = '%s.*'%field['name']
+            else:
+                fieldname = field['name']
             
             # If we have any references, build the appropriate lookups
             if 'refersto' in field:
@@ -121,10 +125,6 @@ def get_views(models_definition, views_definition):
                         view['map'] = map
                         views[view['url']] = map
 
-                if field['type'].startswith('Sequence'):
-                    fieldname = '%s.*'%field['name']
-                else:
-                    fieldname = field['name']
 
                 if isinstance(uses, basestring):
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( fieldname )
