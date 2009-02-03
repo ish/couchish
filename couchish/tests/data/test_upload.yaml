@@ -1,0 +1,7 @@
+fields:
+- name: label
+
+- name: textfile
+  type: File()
+
+
