@@ -11,6 +11,8 @@ from couchdbsession import session
 
 from dottedish import dotted
 from copy import copy
+import base64
+import uuid
 
 class CouchishError(Exception):
     """
@@ -33,46 +35,85 @@ class TooMany(CouchishError):
     pass
 
 
+def get_attr(prefix, parent):
+    if prefix is None:
+        return parent
+    segments = [str(segment) for segment in prefix]
+    if parent != '':
+        segments += parent.split('.')
+    attr = '.'.join( segments )
+    return attr
+
 def get_files(data, original=None, prefix=None):
     files = {}
-    if not isinstance(data, dict):
-        return data, files
-    dd = dotted(data)
+    inlinefiles = {}
+    original_files = {}
     if isinstance(original, dict):
-        ddoriginal = dotted(original)
+        get_files_from_original(data, original, files, inlinefiles, original_files, prefix)
+    if isinstance(data, dict):
+        get_files_from_data(data, original, files, inlinefiles, original_files, prefix)
+    return data, files, inlinefiles, original_files
+
+def has_unmodified_signature(f):
+    # do we have any data keys
+    if ('file' in f or 'base64' in f or 'data' in f):
+        # are the data keys None
+        if f.get('file') is None and f.get('data') is None and f.get('base64') is None:
+            return True
+    return False
+
+def get_with_empty_handler(d, parent):
+    if parent == '':
+        return d
+    else:
+        return d[parent]
+
+def clear_file_data(f):
+    if 'file' in f:
+        del f['file']
+    if 'base64' in f:
+        del f['base64']
+    if 'data' in f:
+        del f['data']
+
+def make_dotted_or_emptydict(d):
+    if isinstance(d, dict):
+        return dotted(d)
+    return {}
+
+def get_files_from_data(data, original, files, inlinefiles, original_files, prefix):
+    dd = make_dotted_or_emptydict(data)
+    ddoriginal = make_dotted_or_emptydict(original)
     for k in dd.dottedkeys():
-        try:
-            kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
-            if lastk == '__type__' and dd[k] == 'file':
-                if kparent == '':
-                    f = dd
+        kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
+        if lastk == '__type__' and dd[k] == 'file':
+            f = get_with_empty_handler(dd, kparent)
+            if has_unmodified_signature(f):
+                # if we have no original data then we presume the file should remain unchanged
+                if original is not None and isinstance(original, dict):
+                    f = get_with_empty_handler(ddoriginal)
+            else:
+                # We're dealing with a new file so we create a uuid and attach it
+                f['id'] = uuid.uuid4().hex
+                if f.get('inline',False) is True:
+                    filestore = inlinefiles
                 else:
-                    f = dd[kparent]
-                if f['file'] is None and f['filename'] is None and f['mimetype'] is None:
-                    # if we have no original then the result is None 
-                    # XXX this is possibly a hack to cope with formish returning no data?
-                    if original is None or not isinstance(ddoriginal, dict):
-                        f = None
-                    # otherwise the result is unchanged
-                    else:
-                        if kparent == '':
-                            f = ddoriginal
-                        else:
-                            f = ddoriginal[kparent]
-                else:
-                    # remove the file data from document and add to files for attachment handling
-                    if prefix is None:
-                        files[kparent] = copy(f.data)
-                    else:
-                        segments = [str(segment) for segment in prefix]
-                        if kparent != '':
-                            segments += kparent.split('.')
-                        attr = '.'.join( segments )
-                        files[attr] = copy(f.data)
-                    del f['file']
-        except TypeError:
-            continue
-    return dd.data, files
+                    filestore = files
+                #  add the files for attachment handling and remove the file data from document
+                filestore[get_attr(prefix, kparent)] = copy(f.data)
+                clear_file_data(f)
+
+def get_files_from_original(data, original, files, inlinefiles, original_files, prefix):
+    dd = make_dotted_or_emptydict(data)
+    ddoriginal = make_dotted_or_emptydict(original)
+    for k in ddoriginal.dottedkeys():
+        kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
+        # is the new data a new file
+        if lastk == '__type__' and ddoriginal[k] == 'file':
+            f = get_with_empty_handler(ddoriginal, kparent)
+            new_item = get_with_empty_handler(dd, kparent)
+            if not has_unmodified_signature(new_item):
+                original_files[get_attr(prefix, kparent)] = f
 
 
 class CouchishStore(object):
@@ -111,7 +152,8 @@ class CouchishStoreSession(object):
         self.session = session.Session(store.db,
               pre_flush_hook=self._pre_flush_hook,
               post_flush_hook=self._post_flush_hook)
-        self.files = {}
+        self.file_additions = {}
+        self.file_deletions = {}
 
     def __enter__(self):
         """
@@ -144,6 +186,15 @@ class CouchishStoreSession(object):
         else:
             doc = doc_or_tuple
         return self.session.delete(doc)
+
+    def get_attachment(self, id_or_doc, filename):
+        return self.session._db.get_attachment(id_or_doc, filename)
+
+    def put_attachment(self, doc, content, filename=None, content_type=None):
+        return self.session._db.put_attachment(doc, content, filename=filename, content_type=content_type)
+
+    def delete_attachment(self, doc, filename):
+        return self.session._db.delete_attachment(doc, filename)
 
     def doc_by_id(self, id):
         """
@@ -194,46 +245,98 @@ class CouchishStoreSession(object):
         """
         return self.session.view(view, **options)
 
-    def flush(self):
-        """
-        Flush the session.
-        """
-        returnvalue =  self.session.flush()
-        files = self.files
-        filesandrevs = []
-        for id, attrfiles in self.files.items():
-            doc = self.session.get(id)
-            for attr, f in attrfiles.items():
-                self.session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, f['file'].read(), filename=attr, content_type=f['mimetype'])
-
-        return returnvalue
+            
 
 
     def _pre_flush_hook(self, session, deletions, additions, changes):
+        self._parse_changes_for_files(session, deletions, additions, changes)
+
+    def _parse_changes_for_files(self, session, deletions, additions, changes):
         additions = list(additions)
-        allfiles = {}
-        additions = list(additions)
+        changes = list(changes)
+        deletions = list(deletions)
+        all_separate_files = {}
+        all_inline_files = {}
         for addition in additions:
-            addition, files = get_files(addition)
+            addition, files, inlinefiles, original_files_notused = get_files(addition)
             if files:
-                allfiles.setdefault(addition['_id'],{}).update(files)
+                all_separate_files.setdefault(addition['_id'],{}).update(files)
+            if inlinefiles:
+                all_inline_files.setdefault(addition['_id'],{}).update(inlinefiles)
+            self._extract_inline_attachments(addition, inlinefiles)
 
 
+        all_original_files = {}
         changes = list(changes)
         for n, changeset in enumerate(changes):
             d, cs = changeset
             cs = list(cs)
             for m, c in enumerate(cs):
-                if c['action'] in ['edit','create']:
-                    c['value'], files = get_files(c['value'], original=c.get('was'), prefix=c['path'])
+                if c['action'] in ['edit','create','remove']:
+                    c['value'], files, inlinefiles, original_files = get_files(c.get('value'), original=c.get('was'), prefix=c['path'])
                     cs[m] = c
                     if files:
-                        allfiles.setdefault(d['_id'],{}).update(files)
+                        all_separate_files.setdefault(d['_id'],{}).update(files)
+                    if inlinefiles:
+                        all_inline_files.setdefault(d['_id'],{}).update(inlinefiles)
+                    all_original_files.setdefault(d['_id'], {}).update(original_files)
+                    self._extract_inline_attachments(d, inlinefiles)
             changes[n] = (d, cs)
-        self.files = allfiles
+
+        self.file_deletions = all_original_files
+        self.file_additions = all_separate_files
+
+    def _extract_inline_attachments(self, doc, files):
+        """
+        Move the any attachment data that we've found into the _attachments attribute
+        """
+        for attr, f in files.items():
+            if 'data' in f:
+                data = base64.encodestring(f['data']).strip()
+            if 'base64' in f:
+                data = f['base64'].replace('\n','').strip()
+            if 'file' in f:
+                data = base64.encodestring(f['file'].read()).strip()
+            doc.setdefault('_attachments',{})[f['id']] = {'content_type': f['mimetype'],'data': data}
+
+    def flush(self):
+        """
+        Flush the session.
+        """
+        returnvalue =  self.session.flush()
+        self._handle_separate_attachments()
+        return returnvalue
+
+    def _handle_separate_attachments(self):
+        """
+        add attachments that aren't inline and remove any attachments without references
+        """
+        # XXX This needs to cope with files moving when sequences are re-numbered. We need
+        # XXX to talk to matt about what a renumbering like this looks like
+
+        for id, attrfiles in self.file_additions.items():
+            doc = self.session.get(id)
+            for attr, f in attrfiles.items():
+                if 'data' in f:
+                    data = f['data']
+                elif 'base64' in f:
+                    data = base64.decodestring(f['base64'])
+                else:
+                    data = f['file'].read()
+                self.session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, data, filename=f['id'], content_type=f['mimetype'])
+
+        for id, attrfiles in self.file_deletions.items():
+            # XXX had to use _db because delete attachment freeaked using session version. 
+            doc = self.session._db.get(id)
+            for attr, f in attrfiles.items():
+                self.session._db.delete_attachment(doc, f['id'])
+
+        self.file_additions = {}
+        self.file_deletions = {}
 
     def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=None):
-
+        """
+        """
         # Initialise of copy the prefix list, because we're about to change it.
         if prefix is None:
             prefix = []
@@ -250,6 +353,7 @@ class CouchishStoreSession(object):
             else:
                 is_seq = False
             current = current.replace('*','')
+
             prefix.append(current)
             current_ref = ref_doc[current]
             if is_seq:
@@ -257,6 +361,7 @@ class CouchishStoreSession(object):
                     self._find_and_match_nested_item(ref_doc_ref, segments, ref_data, prefix)
             else:
                 self._find_and_match_nested_item(current_ref, segments, ref_data, prefix)
+
 
     def reset(self):
         """

@@ -1,7 +1,8 @@
 import schemaish, formish
 from couchish.formish_jsonbuilder import build as formish_build
 from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
-from couchish.formish_jsonbuilder import FormishWidgetRegistry
+from couchish.formish_jsonbuilder import FormishWidgetRegistry, expand_definition
+from couchish.schemaish_jsonbuilder import strip_stars
 
 
 class Reference(schemaish.attr.Attribute):
@@ -56,17 +57,6 @@ class WidgetRegistry(FormishWidgetRegistry):
         datakeys = widgetSpec['options']['datakeys']
         view = '%s/all'%reference
         return SelectCouchDBChoice(options=options(self.db, label_template, view, datakeys))
-
-
-def expand_definition(pre_expand_definition):
-    definition = []
-    for field in pre_expand_definition['fields']:
-        item = {}
-        item['key'] = strip_stars(field['name'])
-        item['type'] = field.get('type','String()')
-        item['refersto'] = field.get('refersto', None)
-        definition.append(item) 
-    return definition
 
 
 def build(definition, name=None, defaults=None, errors=None, action='', widget_registry=WidgetRegistry(), type_registry=TypeRegistry()):

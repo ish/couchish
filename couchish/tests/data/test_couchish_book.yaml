@@ -9,4 +9,3 @@ fields:
   type: Reference()
   refersto: author_surname
 
-
