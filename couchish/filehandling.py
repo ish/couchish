@@ -70,13 +70,19 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
         kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
         if lastk == '__type__' and dd[k] == 'file':
             f = get_with_empty_handler(dd, kparent)
+            if ddoriginal.get(k) == 'file':
+                of = get_with_empty_handler(ddoriginal, kparent)
+            else:
+                of = None
             if has_unmodified_signature(f):
                 # if we have no original data then we presume the file should remain unchanged
-                if original is not None and isinstance(original, dict):
-                    f = get_with_empty_handler(ddoriginal)
+                f = of
             else:
                 # We're dealing with a new file so we create a uuid and attach it
-                f['id'] = uuid.uuid4().hex
+                if of and 'id' in of:
+                    f['id'] = of['id']
+                else:
+                    f['id'] = uuid.uuid4().hex
                 if f.get('inline',False) is True:
                     filestore = inlinefiles
                 else:
@@ -95,7 +101,7 @@ def get_files_from_original(data, original, files, inlinefiles, original_files, 
         if lastk == '__type__' and ddoriginal[k] == 'file':
             f = get_with_empty_handler(ddoriginal, kparent)
             new_item = get_with_empty_handler(dd, kparent)
-            if not has_unmodified_signature(new_item):
+            if not has_unmodified_signature(new_item) and dd.get(k) != 'file':
                 original_files[get_attr(prefix, kparent)] = f
 
 

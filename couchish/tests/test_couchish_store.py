@@ -379,7 +379,7 @@ class TestFiles(unittest.TestCase):
         sess = self.S.session()
         attachment = sess.session._db.get_attachment(matt_id, matt['photo']['id'])
         assert attachment == 'and now it\'s changed\n'
-        assert matt['photo']['id'] != first_created_photo_id
+        assert matt['photo']['id'] == first_created_photo_id
         
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
