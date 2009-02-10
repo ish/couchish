@@ -76,7 +76,8 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
                 of = None
             if has_unmodified_signature(f):
                 # if we have no original data then we presume the file should remain unchanged
-                f = of
+                f['id'] = of['id']
+                clear_file_data(f)
             else:
                 # We're dealing with a new file so we create a uuid and attach it
                 if of and 'id' in of:

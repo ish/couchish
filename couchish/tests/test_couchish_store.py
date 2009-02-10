@@ -468,3 +468,51 @@ class TestFiles(unittest.TestCase):
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
         assert matt['_attachments'][ matt['photo'][0]['id'] ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
+
+    def test_unchanged_file(self):
+        from schemaish.type import File
+
+        # create a file
+        f = open('couchish/tests/data/test.txt','r')
+        matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo':
+            {'__type__': 'file',
+             'file': f,
+             'filename':'test.txt',
+             'mimetype':'text/plain'} }
+        with self.S.session() as S:
+            matt_id = S.create(matt)
+        f.close()
+
+        # check the attachment
+        first_created_photo_id = matt['photo']['id']
+        sess = self.S.session()
+        attachment = sess.session._db.get_attachment(matt_id, first_created_photo_id)
+        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+        assert 'id' in matt['photo']
+
+        # get the doc back out using couchish and check it's OK
+        with self.S.session() as S:
+            matt = S.doc_by_id(matt_id)
+        assert len(matt['_attachments']) == 1
+        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+
+        # now lets replace the file
+        f = open('couchish/tests/data/test-changed.txt','r')
+        with self.S.session() as S:
+            matt = S.doc_by_id(matt_id)
+            matt['photo'] = {'__type__': 'file',
+                 'file': None,
+                 'filename':'test_ADDEDSUFFIX.txt',
+                 'mimetype':'text/plain'}
+        f.close()
+        new_photo_id = matt['photo']['id']
+
+        sess = self.S.session()
+        attachment = sess.session._db.get_attachment(matt_id, matt['photo']['id'])
+        assert matt['photo']['id'] == first_created_photo_id
+        
+        with self.S.session() as S:
+            matt = S.doc_by_id(matt_id)
+        assert len(matt['_attachments']) == 1
+        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['photo']['filename'] == 'test_ADDEDSUFFIX.txt'

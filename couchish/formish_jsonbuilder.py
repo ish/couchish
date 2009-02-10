@@ -1,6 +1,6 @@
 from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars
 import formish
-from formish import filehandler
+from formish import filestore
 
 class FormishWidgetRegistry(object):
     """
@@ -182,12 +182,13 @@ class FormishWidgetRegistry(object):
         originalurl = widget_spec.get('originalurl','/images/missing-image.jpg')
         def urlfactory(obj):
             if isinstance(obj,schemaish.type.File):
-                suffix = obj.filename.split('.')[-1]
-                return '%s/%s.%s'%(obj.id, obj.attr,suffix)
+                return '%s/%s'%(obj.doc_id, obj.id)
+            elif obj:
+                return obj
             else:
                 return None
-        resource_root = widget_spec.get('options',{}).get('resource_root','/filehandler')
-        return formish.FileUpload(filehandler.TempFileHandlerWeb(default_url=originalurl, resource_root=resource_root,urlfactory=urlfactory),originalurl=originalurl)
+        root_dir = widget_spec.get('options',{}).get('root_dir',None)
+        return formish.FileUpload(filestore.CacheAwareWritableFileStore(root_dir=root_dir), urlfactory=urlfactory, originalurl=originalurl)
 
 formish_widget_registry = FormishWidgetRegistry()
 
