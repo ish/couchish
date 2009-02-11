@@ -179,8 +179,7 @@ class FormishWidgetRegistry(object):
     def fileupload_factory(self,widget_spec):
         if widget_spec is None:
             widget_spec = {}
-        originalurl = widget_spec.get('originalurl','/images/missing-image.jpg')
-        def urlfactory(obj):
+        def url_ident_factory(obj):
             if isinstance(obj,schemaish.type.File):
                 return '%s/%s'%(obj.doc_id, obj.id)
             elif obj:
@@ -188,9 +187,19 @@ class FormishWidgetRegistry(object):
             else:
                 return None
         root_dir = widget_spec.get('options',{}).get('root_dir',None)
-        resource_root = widget_spec.get('options',{}).get('resource_root',None)
+        url_base = widget_spec.get('options',{}).get('url_base',None)
+        image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
+        show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
+        show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
+        show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
         return formish.FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
-                       urlfactory=urlfactory, originalurl=originalurl, resource_root=resource_root)
+             url_base=url_base,
+             image_thumbnail_default=image_thumbnail_default,
+             show_download_link=show_download_link,
+             show_file_preview=show_file_preview,
+             show_image_thumbnail=show_image_thumbnail,
+             url_ident_factory=url_ident_factory,
+                                 )
 
 formish_widget_registry = FormishWidgetRegistry()
 
