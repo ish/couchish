@@ -188,7 +188,9 @@ class FormishWidgetRegistry(object):
             else:
                 return None
         root_dir = widget_spec.get('options',{}).get('root_dir',None)
-        return formish.FileUpload(filestore.CacheAwareWritableFileStore(root_dir=root_dir), urlfactory=urlfactory, originalurl=originalurl)
+        resource_root = widget_spec.get('options',{}).get('resource_root',None)
+        return formish.FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
+                       urlfactory=urlfactory, originalurl=originalurl, resource_root=resource_root)
 
 formish_widget_registry = FormishWidgetRegistry()
 
