@@ -101,7 +101,10 @@ class CouchishStoreSession(object):
         """
         Return a single document, given it's ID.
         """
-        return self.session.get(id)
+        doc = self.session.get(id)
+        if doc is None:
+            raise errors.NotFound("No document with id %r" % (id,))
+        return doc
 
     def doc_by_view(self, view, key):
         results = self.session.view(view, startkey=key, endkey=key, limit=2,

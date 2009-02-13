@@ -3,7 +3,7 @@ import unittest
 import os.path
 import uuid
 import couchdb
-from couchish import config, store
+from couchish import config, errors, store
 from copy import copy
 
 def data_filename(filename):
@@ -107,6 +107,11 @@ class Test(unittest.TestCase):
         assert book == {'model_type': 'book', 'title': 'Title',
                             'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'},
                             'coauthored': {'_ref': matt_id, 'last_name': 'Woodall'}}
+
+    def test_doc_by_id_not_found(self):
+        sess = self.S.session()
+        self.assertRaises(errors.NotFound, sess.doc_by_id, 'missing')
+
 
 class TestDeep(unittest.TestCase):
 
