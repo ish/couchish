@@ -22,7 +22,6 @@ class CouchishStore(object):
         self.db = db
         self.config = config
 
-
     def sync_views(self):
         for url, view in self.config.viewdata['views'].items():
             segments = url.split('/')
@@ -32,13 +31,11 @@ class CouchishStore(object):
             view.get_doc(self.db)
             view.sync(self.db)
 
-
     def session(self):
         """
         Create an editing session.
         """
         return CouchishStoreSession(self)
-
 
     def _view(self, view):
         """
@@ -46,7 +43,6 @@ class CouchishStore(object):
         namespace.
         """
         return 'couchish/%s' % (self.design_doc, view)
-
 
 
 class CouchishStoreSession(object):
@@ -59,13 +55,11 @@ class CouchishStoreSession(object):
         self.file_additions = {}
         self.file_deletions = {}
 
-
     def __enter__(self):
         """
         "with" statement entry.
         """
         return self
-
 
     def __exit__(self, type, value, traceback):
         """
@@ -76,13 +70,11 @@ class CouchishStoreSession(object):
         else:
             self.reset()
 
-
     def create(self, doc):
         """
         Create a document.
         """
         return self.session.create(doc)
-
 
     def delete(self, doc_or_tuple):
         """
@@ -95,26 +87,21 @@ class CouchishStoreSession(object):
             doc = doc_or_tuple
         return self.session.delete(doc)
 
-
     def get_attachment(self, id_or_doc, filename):
         return self.session._db.get_attachment(id_or_doc, filename)
 
-
     def put_attachment(self, doc, content, filename=None, content_type=None):
-        return self.session._db.put_attachment(doc, content,
-                                            filename=filename, content_type=content_type)
-
+        return self.session._db.put_attachment(doc, content, filename=filename,
+                                               content_type=content_type)
 
     def delete_attachment(self, doc, filename):
         return self.session._db.delete_attachment(doc, filename)
-
 
     def doc_by_id(self, id):
         """
         Return a single document, given it's ID.
         """
         return self.session.get(id)
-
 
     def doc_by_view(self, view, key):
         results = self.session.view(view, startkey=key, endkey=key, limit=2,
@@ -126,7 +113,6 @@ class CouchishStoreSession(object):
             raise errors.TooMany()
         return rows[0].doc
 
-
     def docs_by_id(self, ids, **options):
         """
         Generate the sequence of documents with the given ids.
@@ -136,7 +122,6 @@ class CouchishStoreSession(object):
         options['include_docs'] = True
         results = self.session.view('_all_docs', **options)
         return (row.doc for row in results.rows)
-
 
     def docs_by_type(self, type, **options):
         """
@@ -149,13 +134,11 @@ class CouchishStoreSession(object):
         results = self.view(self.store._view(type), **options)
         return (row.doc for row in results.rows)
 
-
     def docs_by_view(self, view, **options):
         options = dict(options)
         options['include_docs'] = True
         results = self.session.view(view, **options)
         return (row.doc for row in results.rows)
-
 
     def view(self, view, **options):
         """
@@ -163,10 +146,8 @@ class CouchishStoreSession(object):
         """
         return self.session.view(view, **options)
 
-
     def _pre_flush_hook(self, session, deletions, additions, changes):
         self.file_deletions, self.file_additions = filehandling._parse_changes_for_files(session, deletions, additions, changes)
-
 
     def flush(self):
         """
@@ -176,6 +157,11 @@ class CouchishStoreSession(object):
         filehandling._handle_separate_attachments(self.session, self.file_deletions, self.file_additions)
         return returnvalue
 
+    def reset(self):
+        """
+        Reset the session, forgetting everything it knows.
+        """
+        self.session.reset()
 
     def _post_flush_hook(self, session, deletions, additions, changes):
 
@@ -215,17 +201,7 @@ class CouchishStoreSession(object):
                         # e.g. we may have authors*. or metadata*.authors*
                         self._find_and_match_nested_item(ref_doc, attr.split('.'), ref_data)
 
-
-    def reset(self):
-        """
-        Reset the session, forgetting everything it knows.
-        """
-        self.session.reset()
-
-
     def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=None):
-        """
-        """
         # Initialise of copy the prefix list, because we're about to change it.
         if prefix is None:
             prefix = []
@@ -250,3 +226,4 @@ class CouchishStoreSession(object):
                     self._find_and_match_nested_item(ref_doc_ref, segments, ref_data, prefix)
             else:
                 self._find_and_match_nested_item(current_ref, segments, ref_data, prefix)
+

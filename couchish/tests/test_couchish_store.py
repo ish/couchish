@@ -516,3 +516,4 @@ class TestFiles(unittest.TestCase):
         assert len(matt['_attachments']) == 1
         assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
         assert matt['photo']['filename'] == 'test_ADDEDSUFFIX.txt'
+
