@@ -111,9 +111,9 @@ class CouchishStoreSession(object):
                                     include_docs=True)
         rows = results.rows
         if len(rows) == 0:
-            raise errors.NotFound()
+            raise errors.NotFound("No document in view %r with key %r" % (view, key))
         elif len(rows) == 2:
-            raise errors.TooMany()
+            raise errors.TooMany("Too many documents in view %r for key %r" % (view, key))
         return rows[0].doc
 
     def docs_by_id(self, ids, **options):
