@@ -20,24 +20,24 @@ fields:
   type: String()
   widget:
     type: SelectChoice()
-    options: One, Two, Three
+    options: [One, Two, Three]
 
 - name: radiochoice
   type: String()
   widget:
     type: RadioChoice()
-    options: One, Two, Three
+    options: [One, Two, Three]
 
 - name: selectwithotherchoice
   type: String()
   widget:
     type: SelectWithOtherChoice()
-    options: One, Two, Three
+    options: [One, Two, Three]
 
 
 - name: checkboxmultichoice
   type: Sequence(String())
   widget:
     type: CheckboxMultiChoice()
-    options: One, Two, Three, Four, Five
+    options: [One, Two, Three, Four, Five]
 

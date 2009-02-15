@@ -82,13 +82,13 @@ class Test(unittest.TestCase):
 
     def test_widgets(self):
         form = get_form('test_widgets.yaml')
-        assert repr(form['input'].widget) == '<bound widget name="input", widget="Input", type="String">'
-        assert repr(form['hidden'].widget) == '<bound widget name="hidden", widget="Hidden", type="String">'
-        assert repr(form['textarea'].widget) == '<bound widget name="textarea", widget="TextArea", type="String">'
-        assert repr(form['selectchoice'].widget) == '<bound widget name="selectchoice", widget="SelectChoice", type="String">'
-        assert repr(form['radiochoice'].widget) == '<bound widget name="radiochoice", widget="RadioChoice", type="String">'
-        assert repr(form['selectwithotherchoice'].widget) == '<bound widget name="selectwithotherchoice", widget="SelectWithOtherChoice", type="String">'
-        assert repr(form['checkboxmultichoice'].widget) == '<bound widget name="checkboxmultichoice", widget="CheckboxMultiChoice", type="Sequence">'
-        
-        
+        assert repr(form['input'].widget) == "BoundWidget(widget=formish.Input(), field=formish.Field(name='input', attr=schemaish.String()))"
+        assert repr(form['hidden'].widget) == "BoundWidget(widget=formish.Hidden(), field=formish.Field(name='hidden', attr=schemaish.String()))"
+        assert repr(form['textarea'].widget) == "BoundWidget(widget=formish.TextArea(), field=formish.Field(name='textarea', attr=schemaish.String()))"
+        assert repr(form['selectchoice'].widget) == "BoundWidget(widget=formish.SelectChoice(options=[('One', 'One'), ('Two', 'Two'), ('Three', 'Three')], none_option=(None, '- choose -')), field=formish.Field(name='selectchoice', attr=schemaish.String()))"
+        assert repr(form['selectwithotherchoice'].widget) == "BoundWidget(widget=formish.SelectWithOtherChoice(options=[('One', 'One'), ('Two', 'Two'), ('Three', 'Three')], none_option=[None, '- choose -']), field=formish.Field(name='selectwithotherchoice', attr=schemaish.String()))"
+        assert repr(form['radiochoice'].widget) == "BoundWidget(widget=formish.RadioChoice(options=[('One', 'One'), ('Two', 'Two'), ('Three', 'Three')], none_option=[None, '- choose -']), field=formish.Field(name='radiochoice', attr=schemaish.String()))"
+        assert repr(form['checkboxmultichoice'].widget) == "BoundWidget(widget=formish.CheckboxMultiChoice(options=[('One', 'One'), ('Two', 'Two'), ('Three', 'Three'), ('Four', 'Four'), ('Five', 'Five')]), field=formish.Sequence(name='checkboxmultichoice', attr=schemaish.Sequence(schemaish.String())))"
 
+        
+        
