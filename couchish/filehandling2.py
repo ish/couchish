@@ -74,7 +74,7 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
 
 
 def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
-    if has_unmodified_signature(f):
+    if f.file is None:
         # if we have no original data then we presume the file should remain unchanged
         f.id = of['id']
         clear_file_data(f)
@@ -98,7 +98,7 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
 
 
 def get_file_from_original(f, of, files, inlinefiles, original_files, fullprefix):
-    if not has_unmodified_signature(f) and not isinstance(f, File):
+    if f.file is not None and not isinstance(f, File):
         original_files[fullprefix] = f
 
 def get_files_from_original(data, original, files, inlinefiles, original_files, prefix):
