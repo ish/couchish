@@ -19,7 +19,8 @@ from couchish import jsonutil
 def get_attr(prefix, parent=None):
     # combine prefix and parent where prefix is a list  and parent is a dotted string
     if parent is None:
-        return '.'.join(prefix)
+        segments = [str(segment) for segment in prefix]
+        return '.'.join(segments)
     if prefix is None:
         return parent
     segments = [str(segment) for segment in prefix]
@@ -98,12 +99,12 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
 
 
 def get_file_from_original(f, of, files, inlinefiles, original_files, fullprefix):
-    if f.file is not None and not isinstance(f, File):
-        original_files[fullprefix] = f
+    if  not isinstance(f, File):
+        original_files[fullprefix] = of
 
 def get_files_from_original(data, original, files, inlinefiles, original_files, prefix):
     if isinstance(original, dict) and original.get('__type__',None) is not None:
-        get_file_from_original(data, original, files, inlinefiles, original_files, prefix)
+        get_file_from_original(data, original, files, inlinefiles, original_files, get_attr(prefix))
         return
     if not isinstance(original, dict):
         return
@@ -181,7 +182,7 @@ def _handle_separate_attachments(session, deletions, additions):
         # XXX had to use _db because delete attachment freeaked using session version. 
         doc = session._db.get(id)
         for attr, f in attrfiles.items():
-            session._db.delete_attachment(doc, f.id)
+            session._db.delete_attachment(doc, f['id'])
 
     additions = {}
     deletions = {}

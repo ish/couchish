@@ -94,19 +94,15 @@ class TestFiles(unittest.TestCase):
         fh = open('couchish/tests/data/test-changed.txt','r')
         f = jsonutil.CouchishFile(fh, 'test-changed.txt','text/plain')
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f}
-        print '--------------------- trying to replace file'
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
             matt['photo'] = f
         fh.close()
-        print 'matt_subject',matt.__subject__
         new_photo_id = matt.__subject__['photo'].id
 
         sess = self.S.session()
         attachment = 'foo'
-        print 'id = ',matt_id, new_photo_id
         attachment = sess.session._db.get_attachment(matt_id,new_photo_id)
-        print 'xxx',attachment
         assert attachment == 'and now it\'s changed\n'
         assert new_photo_id == first_created_photo_id
         
@@ -125,7 +121,7 @@ class TestFiles(unittest.TestCase):
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f}
         with self.S.session() as S:
             matt_id = S.create(matt)
-        f.close()
+        fh.close()
 
         # check the attachment
         first_created_photo_id = matt['photo'].id
@@ -138,7 +134,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
@@ -158,7 +154,7 @@ class TestFiles(unittest.TestCase):
         matt = {'model_type': 'book', 'first_name': 'Matt', 'last_name': 'Goodall','photo':[ f ]}
         with self.S.session() as S:
             matt_id = S.create(matt)
-        f.close()
+        fh.close()
 
         # check the attachment
         first_created_photo_id = matt['photo'][0].id
@@ -168,17 +164,17 @@ class TestFiles(unittest.TestCase):
         assert  hasattr(matt['photo'][0],'id')
     
         fh2 = open('couchish/tests/data/test-changed.txt','r')
-        f2 = File(fh, 'test2.txt','text/plain')
+        f2 = File(fh2, 'test2.txt','text/plain')
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
             matt['photo'].append( f2  )
-        f.close()
+        fh2.close()
 
 
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
-        assert matt['_attachments'][ matt['photo'][0].id ] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
-        assert matt['_attachments'][ matt['photo'][1].id ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
+        assert matt['_attachments'][ matt['photo'][0]['id'] ] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][ matt['photo'][1]['id'] ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
         assert len(matt['_attachments']) == 2
 
         with self.S.session() as S:
@@ -188,7 +184,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][ matt['photo'][0].id ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
+        assert matt['_attachments'][ matt['photo'][0]['id'] ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
 
     def test_unchanged_file(self):
         fh = open('couchish/tests/data/test.txt','r')
@@ -198,7 +194,7 @@ class TestFiles(unittest.TestCase):
         # create a file
         with self.S.session() as S:
             matt_id = S.create(matt)
-        f.close()
+        fh.close()
 
         # check the attachment
         first_created_photo_id = matt['photo'].id
@@ -211,21 +207,21 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
         # now lets replace the file
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
             matt['photo'] = File(None,'test_ADDEDSUFFIX.txt','text/plain')
-        f.close()
-        new_photo_id = matt['photo'].id
+        new_photo_id = matt.__subject__['photo'].id
 
         sess = self.S.session()
-        attachment = sess.session._db.get_attachment(matt_id, matt['photo'].id)
-        assert matt['photo']['id'] == first_created_photo_id
+        attachment = sess.session._db.get_attachment(matt_id, new_photo_id)
+        assert new_photo_id == first_created_photo_id
         
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
+        matt = matt.__subject__
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
-        assert matt['photo'].filename == 'test_ADDEDSUFFIX.txt'
+        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['photo']['filename'] == 'test_ADDEDSUFFIX.txt'
