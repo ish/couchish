@@ -42,7 +42,7 @@ class CouchishStore(object):
         Return the full name of the view, i.e. including the CouchishStore's
         namespace.
         """
-        return 'couchish/%s' % (self.design_doc, view)
+        return 'couchish/%s' % (view)
 
 
 class CouchishStoreSession(object):
@@ -131,10 +131,8 @@ class CouchishStoreSession(object):
         Generate the sequence of docs of a given type.
         """
         options = dict(options)
-        options['startkey'] = type
-        options['endkey'] = type
         options['include_docs'] = True
-        results = self.view(self.store._view(type), **options)
+        results = self.session.view('%s/all'%type, **options)
         return (row.doc for row in results.rows)
 
     def docs_by_view(self, view, **options):
