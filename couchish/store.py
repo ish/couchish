@@ -7,7 +7,7 @@ Views we can build:
 
 from couchdb.design import ViewDefinition
 
-from couchdbsession import session
+from couchdbsession import a8n, session
 
 from dottedish import dotted
 from copy import copy
@@ -49,9 +49,9 @@ class CouchishStoreSession(object):
 
     def __init__(self, store):
         self.store = store
-        self.session = session.Session(store.db,
-              pre_flush_hook=self._pre_flush_hook,
-              post_flush_hook=self._post_flush_hook)
+        self.session = Session(store.db,
+                               pre_flush_hook=self._pre_flush_hook,
+                               post_flush_hook=self._post_flush_hook)
         self.file_additions = {}
         self.file_deletions = {}
 
@@ -113,6 +113,7 @@ class CouchishStoreSession(object):
         if len(rows) == 0:
             raise errors.NotFound("No document in view %r with key %r" % (view, key))
         elif len(rows) == 2:
+            print "***** HIT WEIRD TOO MANY?? rows=", [vars(row) for row in rows], ", id=", id
             raise errors.TooMany("Too many documents in view %r for key %r" % (view, key))
         return rows[0].doc
 
@@ -229,4 +230,14 @@ class CouchishStoreSession(object):
                     self._find_and_match_nested_item(ref_doc_ref, segments, ref_data, prefix)
             else:
                 self._find_and_match_nested_item(current_ref, segments, ref_data, prefix)
+
+
+
+class Tracker(a8n.Tracker):
+    def _track(self, obj, path):
+        return super(Tracker, self)._track(obj, path)
+
+
+class Session(session.Session):
+    tracker_factory = Tracker
 
