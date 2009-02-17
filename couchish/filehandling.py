@@ -77,11 +77,11 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
 def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
     if f.file is None:
         # if we have no original data then we presume the file should remain unchanged
-        f.id = of['id']
+        f.id = of.id
         clear_file_data(f)
     else:
-        if of and 'id' in of:
-            f.id = of['id']
+        if of and hasattr(of,'id'):
+            f.id = of.id
         else:
             f.id = uuid.uuid4().hex
         if getattr(f,'inline',False) is True:
@@ -99,11 +99,11 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
 
 
 def get_file_from_original(f, of, files, inlinefiles, original_files, fullprefix):
-    if  not isinstance(f, File):
+    if not isinstance(f, File):
         original_files[fullprefix] = of
 
 def get_files_from_original(data, original, files, inlinefiles, original_files, prefix):
-    if isinstance(original, dict) and original.get('__type__',None) is not None:
+    if isinstance(original, File):
         get_file_from_original(data, original, files, inlinefiles, original_files, get_attr(prefix))
         return
     if not isinstance(original, dict):
@@ -182,7 +182,7 @@ def _handle_separate_attachments(session, deletions, additions):
         # XXX had to use _db because delete attachment freeaked using session version. 
         doc = session._db.get(id)
         for attr, f in attrfiles.items():
-            session._db.delete_attachment(doc, f['id'])
+            session._db.delete_attachment(doc, f.id)
 
     additions = {}
     deletions = {}

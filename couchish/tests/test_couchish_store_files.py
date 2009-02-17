@@ -63,7 +63,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
 
     def test_change_file(self):
@@ -88,7 +88,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
         # now lets replace the file
         fh = open('couchish/tests/data/test-changed.txt','r')
@@ -109,7 +109,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
 
 
     def test_remove_file(self):
@@ -134,7 +134,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
@@ -173,8 +173,8 @@ class TestFiles(unittest.TestCase):
 
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
-        assert matt['_attachments'][ matt['photo'][0]['id'] ] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
-        assert matt['_attachments'][ matt['photo'][1]['id'] ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
+        assert matt['_attachments'][ matt['photo'][0].id ] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][ matt['photo'][1].id ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
         assert len(matt['_attachments']) == 2
 
         with self.S.session() as S:
@@ -184,7 +184,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][ matt['photo'][0]['id'] ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
+        assert matt['_attachments'][ matt['photo'][0].id ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
 
     def test_unchanged_file(self):
         fh = open('couchish/tests/data/test.txt','r')
@@ -207,7 +207,7 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
         # now lets replace the file
         with self.S.session() as S:
@@ -223,5 +223,5 @@ class TestFiles(unittest.TestCase):
             matt = S.doc_by_id(matt_id)
         matt = matt.__subject__
         assert len(matt['_attachments']) == 1
-        assert matt['_attachments'][matt['photo']['id']] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
-        assert matt['photo']['filename'] == 'test_ADDEDSUFFIX.txt'
+        assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
+        assert matt['photo'].filename == 'test_ADDEDSUFFIX.txt'

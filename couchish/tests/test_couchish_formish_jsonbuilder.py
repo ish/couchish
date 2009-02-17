@@ -88,6 +88,5 @@ class Test(unittest.TestCase):
     def test_fileupload(self):
         upload_definition = yaml.load( open(DATADIR%'test_upload.yaml').read() )
         f = build(upload_definition)
-        print f()
 
         

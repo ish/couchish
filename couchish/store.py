@@ -229,6 +229,8 @@ class CouchishStoreSession(object):
 
 class Tracker(a8n.Tracker):
     def _track(self, obj, path):
+        if isinstance(obj, jsonutil.CouchishFile):
+            return obj
         return super(Tracker, self)._track(obj, path)
 
 
