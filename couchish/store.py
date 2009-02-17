@@ -37,12 +37,6 @@ class CouchishStore(object):
         """
         return CouchishStoreSession(self)
 
-    def _view(self, view):
-        """
-        Return the full name of the view, i.e. including the CouchishStore's
-        namespace.
-        """
-        return 'couchish/%s' % (view)
 
 
 class CouchishStoreSession(object):
@@ -91,8 +85,8 @@ class CouchishStoreSession(object):
         return self.session._db.get_attachment(id_or_doc, filename)
 
     def put_attachment(self, doc, content, filename=None, content_type=None):
-        return self.session._db.put_attachment(doc, content, filename=filename,
-                                               content_type=content_type)
+        return self.session._db.put_attachment(doc, content,
+                                            filename=filename, content_type=content_type)
 
     def delete_attachment(self, doc, filename):
         return self.session._db.delete_attachment(doc, filename)

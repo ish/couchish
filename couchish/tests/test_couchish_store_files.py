@@ -3,7 +3,7 @@ import unittest
 import os.path
 import uuid
 import couchdb
-from couchish import config, store2
+from couchish import config, store
 from copy import copy
 from schemaish.type import File
 from couchish import jsonutil
@@ -34,7 +34,7 @@ class TestFiles(unittest.TestCase):
         if db_name in server:
             del server[db_name]
         self.db = server.create(db_name)
-        self.S = store2.CouchishStore(self.db, config.Config.from_yaml(
+        self.S = store.CouchishStore(self.db, config.Config.from_yaml(
             dict((name,type_filename(name)) for name in ['book', 'author', 'post', 'dvd']),
             data_filename('test_couchish_views.yaml')
             ))

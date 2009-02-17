@@ -10,9 +10,17 @@ from dottedish import dotted
 from copy import copy
 import base64
 import uuid
+from schemaish.type import File
+from StringIO import StringIO
+import shutil
+from couchish import jsonutil
 
 
-def get_attr(prefix, parent):
+def get_attr(prefix, parent=None):
+    # combine prefix and parent where prefix is a list  and parent is a dotted string
+    if parent is None:
+        segments = [str(segment) for segment in prefix]
+        return '.'.join(segments)
     if prefix is None:
         return parent
     segments = [str(segment) for segment in prefix]
@@ -23,87 +31,90 @@ def get_attr(prefix, parent):
 
 
 def get_files(data, original=None, prefix=None):
+    # scan old data to collect any file refs and then scan new data for file changes
     files = {}
     inlinefiles = {}
     original_files = {}
-    if isinstance(original, dict):
-        get_files_from_original(data, original, files, inlinefiles, original_files, prefix)
-    if isinstance(data, dict):
-        get_files_from_data(data, original, files, inlinefiles, original_files, prefix)
+    get_files_from_original(data, original, files, inlinefiles, original_files, prefix)
+    get_files_from_data(data, original, files, inlinefiles, original_files, prefix)
     return data, files, inlinefiles, original_files
 
 
 def has_unmodified_signature(f):
-    # do we have any data keys
-    if ('file' in f or 'base64' in f or 'data' in f):
-        # are the data keys None
-        if f.get('file') is None and f.get('data') is None and f.get('base64') is None:
-            return True
+    if f.file is None:
+        return True
     return False
 
 
-def get_with_empty_handler(d, parent):
-    if parent == '':
-        return d
-    else:
-        return d[parent]
-
 def clear_file_data(f):
-    if 'file' in f:
-        del f['file']
-    if 'base64' in f:
-        del f['base64']
-    if 'data' in f:
-        del f['data']
-
+    f.file = None
 
 def make_dotted_or_emptydict(d):
     if isinstance(d, dict):
         return dotted(d)
-    return {}
+    return dotted({})
+
 
 
 def get_files_from_data(data, original, files, inlinefiles, original_files, prefix):
-    dd = make_dotted_or_emptydict(data)
+    if isinstance(data, File):
+        get_file_from_item(data, original, files, inlinefiles, original_files, get_attr(prefix))
+        return
+    if not isinstance(data, dict):
+        return
+    dd = dotted(data)
     ddoriginal = make_dotted_or_emptydict(original)
-    for k in dd.dottedkeys():
-        kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
-        if lastk == '__type__' and dd[k] == 'file':
-            f = get_with_empty_handler(dd, kparent)
-            if ddoriginal.get(k) == 'file':
-                of = get_with_empty_handler(ddoriginal, kparent)
+    for k,f in dd.dotteditems():
+        if isinstance(f, File):
+            if isinstance(ddoriginal.get(k), File):
+                of = ddoriginal[k]
             else:
                 of = None
-            if has_unmodified_signature(f):
-                # if we have no original data then we presume the file should remain unchanged
-                f['id'] = of['id']
-                clear_file_data(f)
-            else:
-                # We're dealing with a new file so we create a uuid and attach it
-                if of and 'id' in of:
-                    f['id'] = of['id']
-                else:
-                    f['id'] = uuid.uuid4().hex
-                if f.get('inline',False) is True:
-                    filestore = inlinefiles
-                else:
-                    filestore = files
-                #  add the files for attachment handling and remove the file data from document
-                filestore[get_attr(prefix, kparent)] = copy(f.data)
-                clear_file_data(f)
+            get_file_from_item(f, of, files, inlinefiles, original_files, get_attr(prefix, k))
+           
 
+
+def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
+    if f.file is None:
+        # if we have no original data then we presume the file should remain unchanged
+        f.id = of['id']
+        clear_file_data(f)
+    else:
+        if of and 'id' in of:
+            f.id = of['id']
+        else:
+            f.id = uuid.uuid4().hex
+        if getattr(f,'inline',False) is True:
+            filestore = inlinefiles
+        else:
+            filestore = files
+        #  add the files for attachment handling and remove the file data from document
+        fh = StringIO()
+        shutil.copyfileobj(f.file, fh)
+        fh.seek(0)
+        filestore[fullprefix] = jsonutil.CouchishFile(fh, f.filename, f.mimetype, f.id)
+        clear_file_data(f)
+
+
+
+
+def get_file_from_original(f, of, files, inlinefiles, original_files, fullprefix):
+    if  not isinstance(f, File):
+        original_files[fullprefix] = of
 
 def get_files_from_original(data, original, files, inlinefiles, original_files, prefix):
+    if isinstance(original, dict) and original.get('__type__',None) is not None:
+        get_file_from_original(data, original, files, inlinefiles, original_files, get_attr(prefix))
+        return
+    if not isinstance(original, dict):
+        return
     dd = make_dotted_or_emptydict(data)
-    ddoriginal = make_dotted_or_emptydict(original)
-    for k in ddoriginal.dottedkeys():
-        kparent, lastk = '.'.join(k.split('.')[:-1]), k.split('.')[-1]
-        # is the new data a new file
-        if lastk == '__type__' and ddoriginal[k] == 'file':
-            f = get_with_empty_handler(ddoriginal, kparent)
-            new_item = get_with_empty_handler(dd, kparent)
-            if not has_unmodified_signature(new_item) and dd.get(k) != 'file':
-                original_files[get_attr(prefix, kparent)] = f
+    ddoriginal = dotted(original)
+    for k, of in ddoriginal.dotteditems():
+        if isinstance(of, File):
+            f = dd.get(k)
+            get_file_from_original(f, of, files, inlinefiles, original_files, get_attr(prefix, kparent))
+
 
 
 def _parse_changes_for_files(session, deletions, additions, changes):
@@ -146,13 +157,9 @@ def _extract_inline_attachments(doc, files):
     Move the any attachment data that we've found into the _attachments attribute
     """
     for attr, f in files.items():
-        if 'data' in f:
-            data = base64.encodestring(f['data']).strip()
-        if 'base64' in f:
-            data = f['base64'].replace('\n','').strip()
-        if 'file' in f:
-            data = base64.encodestring(f['file'].read()).strip()
-        doc.setdefault('_attachments',{})[f['id']] = {'content_type': f['mimetype'],'data': data}
+        data = base64.encodestring(f.file.read()).replace('\n','')
+        f.file.close()
+        doc.setdefault('_attachments',{})[f.id] = {'content_type': f.mimetype,'data': data}
 
 
 def _handle_separate_attachments(session, deletions, additions):
@@ -165,13 +172,11 @@ def _handle_separate_attachments(session, deletions, additions):
     for id, attrfiles in additions.items():
         doc = session.get(id)
         for attr, f in attrfiles.items():
-            if 'data' in f:
-                data = f['data']
-            elif 'base64' in f:
-                data = base64.decodestring(f['base64'])
-            else:
-                data = f['file'].read()
-            session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, data, filename=f['id'], content_type=f['mimetype'])
+            data = ''
+            if f.file:
+                data = f.file.read()
+                f.file.close()
+            session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, data, filename=f.id, content_type=f.mimetype)
 
     for id, attrfiles in deletions.items():
         # XXX had to use _db because delete attachment freeaked using session version. 
