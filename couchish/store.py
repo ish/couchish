@@ -13,7 +13,7 @@ from dottedish import dotted
 from copy import copy
 import base64
 import uuid
-from couchish import filehandling, errors
+from couchish import filehandling, errors, jsonutil
 
 
 class CouchishStore(object):
@@ -44,8 +44,10 @@ class CouchishStoreSession(object):
     def __init__(self, store):
         self.store = store
         self.session = Session(store.db,
-                               pre_flush_hook=self._pre_flush_hook,
-                               post_flush_hook=self._post_flush_hook)
+              pre_flush_hook=self._pre_flush_hook,
+              post_flush_hook=self._post_flush_hook,
+              encode_doc=jsonutil.encode_to_dict,
+              decode_doc=jsonutil.decode_from_dict) 
         self.file_additions = {}
         self.file_deletions = {}
 
