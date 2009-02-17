@@ -7,13 +7,13 @@ Views we can build:
 
 from couchdb.design import ViewDefinition
 
-from couchdbsession import a8n, session
+from couchdbsession import session
 
 from dottedish import dotted
 from copy import copy
 import base64
 import uuid
-from couchish import filehandling, errors
+from couchish import filehandling2, errors
 
 
 class CouchishStore(object):
@@ -21,6 +21,7 @@ class CouchishStore(object):
     def __init__(self, db, config):
         self.db = db
         self.config = config
+
 
     def sync_views(self):
         for url, view in self.config.viewdata['views'].items():
@@ -31,35 +32,40 @@ class CouchishStore(object):
             view.get_doc(self.db)
             view.sync(self.db)
 
+
     def session(self):
         """
         Create an editing session.
         """
         return CouchishStoreSession(self)
 
+
     def _view(self, view):
         """
         Return the full name of the view, i.e. including the CouchishStore's
         namespace.
         """
-        return 'couchish/%s' % (view)
+        return 'couchish/%s' % (self.design_doc, view)
+
 
 
 class CouchishStoreSession(object):
 
     def __init__(self, store):
         self.store = store
-        self.session = Session(store.db,
-                               pre_flush_hook=self._pre_flush_hook,
-                               post_flush_hook=self._post_flush_hook)
+        self.session = session.Session(store.db,
+              pre_flush_hook=self._pre_flush_hook,
+              post_flush_hook=self._post_flush_hook)
         self.file_additions = {}
         self.file_deletions = {}
+
 
     def __enter__(self):
         """
         "with" statement entry.
         """
         return self
+
 
     def __exit__(self, type, value, traceback):
         """
@@ -70,11 +76,13 @@ class CouchishStoreSession(object):
         else:
             self.reset()
 
+
     def create(self, doc):
         """
         Create a document.
         """
         return self.session.create(doc)
+
 
     def delete(self, doc_or_tuple):
         """
@@ -87,35 +95,37 @@ class CouchishStoreSession(object):
             doc = doc_or_tuple
         return self.session.delete(doc)
 
+
     def get_attachment(self, id_or_doc, filename):
         return self.session._db.get_attachment(id_or_doc, filename)
 
+
     def put_attachment(self, doc, content, filename=None, content_type=None):
-        return self.session._db.put_attachment(doc, content, filename=filename,
-                                               content_type=content_type)
+        return self.session._db.put_attachment(doc, content,
+                                            filename=filename, content_type=content_type)
+
 
     def delete_attachment(self, doc, filename):
         return self.session._db.delete_attachment(doc, filename)
+
 
     def doc_by_id(self, id):
         """
         Return a single document, given it's ID.
         """
-        doc = self.session.get(id)
-        if doc is None:
-            raise errors.NotFound("No document with id %r" % (id,))
-        return doc
+        return self.session.get(id)
+
 
     def doc_by_view(self, view, key):
         results = self.session.view(view, startkey=key, endkey=key, limit=2,
                                     include_docs=True)
         rows = results.rows
         if len(rows) == 0:
-            raise errors.NotFound("No document in view %r with key %r" % (view, key))
+            raise errors.NotFound()
         elif len(rows) == 2:
-            print "***** HIT WEIRD TOO MANY?? rows=", [vars(row) for row in rows], ", id=", id
-            raise errors.TooMany("Too many documents in view %r for key %r" % (view, key))
+            raise errors.TooMany()
         return rows[0].doc
+
 
     def docs_by_id(self, ids, **options):
         """
@@ -127,14 +137,18 @@ class CouchishStoreSession(object):
         results = self.session.view('_all_docs', **options)
         return (row.doc for row in results.rows)
 
+
     def docs_by_type(self, type, **options):
         """
         Generate the sequence of docs of a given type.
         """
         options = dict(options)
+        options['startkey'] = type
+        options['endkey'] = type
         options['include_docs'] = True
-        results = self.session.view('%s/all'%type, **options)
+        results = self.view(self.store._view(type), **options)
         return (row.doc for row in results.rows)
+
 
     def docs_by_view(self, view, **options):
         options = dict(options)
@@ -142,28 +156,26 @@ class CouchishStoreSession(object):
         results = self.session.view(view, **options)
         return (row.doc for row in results.rows)
 
+
     def view(self, view, **options):
         """
         Call and return a view.
         """
         return self.session.view(view, **options)
 
+
     def _pre_flush_hook(self, session, deletions, additions, changes):
-        self.file_deletions, self.file_additions = filehandling._parse_changes_for_files(session, deletions, additions, changes)
+        self.file_deletions, self.file_additions = filehandling2._parse_changes_for_files(session, deletions, additions, changes)
+
 
     def flush(self):
         """
         Flush the session.
         """
         returnvalue =  self.session.flush()
-        filehandling._handle_separate_attachments(self.session, self.file_deletions, self.file_additions)
+        filehandling2._handle_separate_attachments(self.session, self.file_deletions, self.file_additions)
         return returnvalue
 
-    def reset(self):
-        """
-        Reset the session, forgetting everything it knows.
-        """
-        self.session.reset()
 
     def _post_flush_hook(self, session, deletions, additions, changes):
 
@@ -203,7 +215,17 @@ class CouchishStoreSession(object):
                         # e.g. we may have authors*. or metadata*.authors*
                         self._find_and_match_nested_item(ref_doc, attr.split('.'), ref_data)
 
+
+    def reset(self):
+        """
+        Reset the session, forgetting everything it knows.
+        """
+        self.session.reset()
+
+
     def _find_and_match_nested_item(self, ref_doc, segments, ref_data, prefix=None):
+        """
+        """
         # Initialise of copy the prefix list, because we're about to change it.
         if prefix is None:
             prefix = []
@@ -228,14 +250,3 @@ class CouchishStoreSession(object):
                     self._find_and_match_nested_item(ref_doc_ref, segments, ref_data, prefix)
             else:
                 self._find_and_match_nested_item(current_ref, segments, ref_data, prefix)
-
-
-
-class Tracker(a8n.Tracker):
-    def _track(self, obj, path):
-        return super(Tracker, self)._track(obj, path)
-
-
-class Session(session.Session):
-    tracker_factory = Tracker
-

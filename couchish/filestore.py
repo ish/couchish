@@ -2,7 +2,7 @@ from __future__ import with_statement
 import couchish
 from cStringIO import StringIO
 
-class CouchDBAttachmentSource(object):
+class CouchDBFilestore(object):
     """
     A file source for the FileResource to use to read attachments from
     documents in a CouchDB database.

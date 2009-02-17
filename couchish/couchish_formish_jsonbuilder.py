@@ -59,6 +59,9 @@ class WidgetRegistry(FormishWidgetRegistry):
         return SelectCouchDBChoice(options=options(self.db, label_template, view, datakeys))
 
 
-def build(definition, name=None, defaults=None, errors=None, action='', widget_registry=WidgetRegistry(), type_registry=TypeRegistry()):
+def build(definition, name=None, defaults=None, errors=None, action='', widget_registry=WidgetRegistry(), type_registry=TypeRegistry(), add_id_and_rev=False):
+    if add_id_and_rev is True:
+        definition['fields'].insert(0, {'name': '_rev', 'widget':{'type': 'Hidden()'}})
+        definition['fields'].insert(0, {'name': '_id', 'widget':{'type': 'Hidden()'}})
     form = formish_build(definition, name=name, defaults=defaults, errors=errors, action=action, widget_registry=widget_registry, type_registry=type_registry)
     return form
