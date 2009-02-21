@@ -40,3 +40,4 @@ def getjs(uses):
 if __name__ == '__main__':
     uses =[ 'author.first_name', 'author.last_name', 'author.address.city','author.address.postcode','author.address.street.street2']
     js = getjs(uses)
+    print js

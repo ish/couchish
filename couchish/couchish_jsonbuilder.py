@@ -1,5 +1,5 @@
 from sets import Set
-from couchish.createview import getjs
+from couchish.create_view import getjs
 from couchish.schemaish_jsonbuilder import strip_stars
 
 from string import Template
