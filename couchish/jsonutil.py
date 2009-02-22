@@ -1,31 +1,55 @@
 from jsonish import pythonjson
 from schemaish.type import File
+import base64
 from dottedish import dotted
 
 class CouchishFile(File):
 
-    def __init__(self, file, filename, mimetype, id=None, doc_id=None,inline=False):
+    def __init__(self, file, filename, mimetype, id=None, doc_id=None, inline=False, b64=False):
         self.file = file
         self.filename = filename
         self.mimetype = mimetype
         self.id = id
         self.doc_id = doc_id
         self.inline = inline
+        self.b64 = b64
 
     def __repr__(self):
-        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s" >' % (self.file, self.filename, self.mimetype, self.id, getattr(self, 'doc_id'), self.inline)
+        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s" >' % (self.file, self.filename, self.mimetype, self.id, getattr(self, 'doc_id'), self.inline, self.b64)
+
 
 def file_to_dict(obj):
-    return {'__type__': 'file','filename': obj.filename,'mimetype': obj.mimetype, 'file': None, 'id': getattr(obj, 'id', None), 'doc_id': getattr(obj, 'doc_id', None)}
+    d = {'__type__': 'file',
+         'filename': obj.filename,
+         'mimetype': obj.mimetype,
+         'id': getattr(obj, 'id', None),
+         'doc_id': getattr(obj, 'doc_id', None),
+         'inline': getattr(obj, 'inline', False)}
+    if hasattr(obj,'b64'):
+        d['base64'] = obj.file
+    else:
+        if obj.file is None:
+            d['file'] = None
+        else:
+            d['base64'] = base64.encodestring(obj.file.read())
+    return d
 
 
 def file_from_dict(obj):
     filename = obj['filename']
     mimetype =  obj['mimetype']
-    data = obj['file']
+    inline = obj['inline']
     id = obj.get('id')
     doc_id = obj.get('doc_id')
-    return CouchishFile(data, filename, mimetype, id, doc_id)
+    if 'base64' in obj:
+        data = obj['base64']
+        return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline, b64=True)
+    elif 'file' in obj:
+        data = obj['file']
+        return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline)
+    else:
+        raise Exception('No file data?')
+
 
 pythonjson.json.register_type(File, file_to_dict, file_from_dict, "file")
 pythonjson.json.register_type(CouchishFile, file_to_dict, file_from_dict, "file")
