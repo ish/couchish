@@ -1,5 +1,5 @@
 from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars
-import formish
+import formish, schemaish
 from formish import filestore
 from validatish import validator
 
@@ -50,46 +50,50 @@ class FormishWidgetRegistry(object):
         widget_spec = item.get('widget')
         item_type = item.get('type')
         # If there is a widget spec then that takes precedence
-        if widget_spec is not None:
-            return self.registry[widget_spec['type']](item)
+        k = {}
+        if widget_spec:
+            if 'css_class' in widget_spec:
+                k['css_class'] = widget_spec['css_class']
+            if 'type' in widget_spec:
+                return self.registry[widget_spec['type']](item, k)
         # No widget spec so see if there's a user-friendly default for the data type
         default = self.defaults.get(item_type)
         if default is not None:
-            return default(widget_spec)
+            return default(item, k)
         # OK, so leave it for Formish to decide then
         return None
 
 
-    def input_factory(self, spec):
+    def input_factory(self, spec, k):
         """
         TextInput widget factory.
 
         Specification attributes:
             None
         """
-        return formish.Input()
+        return formish.Input(**k)
 
-    def hidden_factory(self, spec):
+    def hidden_factory(self, spec, k):
         """
         Hidden widget factory.
 
         Specification attributes:
             None
         """
-        return formish.Hidden()
+        return formish.Hidden(**k)
 
 
-    def textarea_factory(self, spec):
+    def textarea_factory(self, spec, k):
         """
         TextArea widget factory.
 
         Specification attributes:
             None
         """
-        return formish.TextArea()
+        return formish.TextArea(**k)
 
 
-    def selectchoice_factory(self, spec):
+    def selectchoice_factory(self, spec, k):
         """
         SelectChoice widget factory.
 
@@ -105,10 +109,10 @@ class FormishWidgetRegistry(object):
             options = [(o[0], o[1]) for o in widget_spec['options']]
         else:
             options = [(o, o) for o in widget_spec['options']]
-        return formish.SelectChoice(options=options)
+        return formish.SelectChoice(options=options, **k)
 
 
-    def radiochoice_factory(self, spec):
+    def radiochoice_factory(self, spec, k):
         """
         SelectChoice widget factory.
 
@@ -124,10 +128,10 @@ class FormishWidgetRegistry(object):
             options = [(o[0], o[1]) for o in widget_spec['options']]
         else:
             options = [(o, o) for o in widget_spec['options']]
-        return formish.RadioChoice(options=options)
+        return formish.RadioChoice(options=options, **k)
 
 
-    def selectwithotherchoice_factory(self, spec):
+    def selectwithotherchoice_factory(self, spec, k):
         """
         SelectChoice widget factory.
 
@@ -142,10 +146,10 @@ class FormishWidgetRegistry(object):
             options = [(o[0], o[1]) for o in widget_spec['options']]
         else:
             options = [(o, o) for o in widget_spec['options']]
-        return formish.SelectWithOtherChoice(options=options)
+        return formish.SelectWithOtherChoice(options=options, **k)
 
 
-    def checkboxmultichoice_factory(self, spec):
+    def checkboxmultichoice_factory(self, spec, k):
         """
         SelectChoice widget factory.
 
@@ -161,39 +165,32 @@ class FormishWidgetRegistry(object):
             options = [(o[0], o[1]) for o in widget_spec['options']]
         else:
             options = [(o, o) for o in widget_spec['options']]
-        return formish.CheckboxMultiChoice(options=options)
+        return formish.CheckboxMultiChoice(options=options, **k)
 
-    def checkbox_factory(self, spec):
+    def checkbox_factory(self, spec, k):
         """
         Checkbox widget factory.
 
         Specification attributes:
             None
         """
-        return formish.Checkbox()
+        return formish.Checkbox(**k)
 
 
-    def dateparts_factory(self, spec):
+    def dateparts_factory(self, spec, k):
         """
         SelectChoice widget factory.
 
         Specification attributes:
             None
         """
-        return formish.DateParts(day_first=True)
+        return formish.DateParts(day_first=True, **k)
 
 
-    def fileupload_factory(self, spec):
+    def fileupload_factory(self, spec, k):
         widget_spec = spec.get('widget')
         if widget_spec is None:
             widget_spec = {}
-        def url_ident_factory(obj):
-            if isinstance(obj,schemaish.type.File):
-                return '%s/%s'%(obj.doc_id, obj.id)
-            elif obj:
-                return obj
-            else:
-                return None
         root_dir = widget_spec.get('options',{}).get('root_dir',None)
         url_base = widget_spec.get('options',{}).get('url_base',None)
         image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
@@ -206,8 +203,7 @@ class FormishWidgetRegistry(object):
              show_download_link=show_download_link,
              show_file_preview=show_file_preview,
              show_image_thumbnail=show_image_thumbnail,
-             url_ident_factory=url_ident_factory,
-                                 )
+             **k )
 
 formish_widget_registry = FormishWidgetRegistry()
 
@@ -227,10 +223,15 @@ def expand_definition(pre_expand_definition):
             item['validator'] = validator.Required()
         else:
             item['validator'] = None
-        if 'widget' in field:
-            item['widget'] = {'type': field['widget']['type']}
-            if 'options' in field['widget']:
-                item['widget']['options'] = field['widget']['options']
+        if 'widget' in field and field['widget'] != {}:
+            w = field['widget']
+            item['widget'] = {}
+            if 'type' in w:
+                item['widget']['type'] = w['type']
+            if 'options' in w:
+                item['widget']['options'] = w['options']
+            if 'css_class' in w:
+                item['widget']['css_class'] = w['css_class']
         definition.append(item)
     return definition
 
