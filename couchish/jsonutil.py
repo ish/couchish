@@ -38,7 +38,7 @@ def file_to_dict(obj):
 def file_from_dict(obj):
     filename = obj['filename']
     mimetype =  obj['mimetype']
-    inline = obj['inline']
+    inline = obj.get('inline', False)
     id = obj.get('id')
     doc_id = obj.get('doc_id')
     if 'base64' in obj:
@@ -57,7 +57,12 @@ pythonjson.decode_mapping['file'] = file_from_dict
 pythonjson.encode_mapping[File] = ('file',file_to_dict)
 pythonjson.encode_mapping[CouchishFile] = ('file',file_to_dict)
 
-encode_to_dict = pythonjson.encode_to_dict
+
+def wrap_encode_to_dict(obj):
+    obj = add_id_and_attr_to_files(obj)
+    return pythonjson.encode_to_dict(obj)
+
+encode_to_dict = wrap_encode_to_dict
 decode_from_dict = pythonjson.decode_from_dict
 
 def add_id_and_attr_to_files(data):
@@ -77,19 +82,8 @@ def add_id_and_attr_to_files(data):
                     dd[k].doc_id = dd[subpath]['_id']
                     dd[k].rev = dd[subpath]['_rev']
 
-    return dd.data
+    data = dd.data
+    return data
 
-
-def wrapdumps(obj):
-    obj = pythonjson.dumps(obj)
-    return obj
-
-def wraploads(obj):
-    obj = pythonjson.loads(obj)
-    obj = add_id_and_attr_to_files(obj)
-    return obj
-
-
-
-dumps = wrapdumps
-loads = wraploads
+dumps = pythonjson.dumps
+loads = pythonjson.loads
