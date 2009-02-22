@@ -4,7 +4,7 @@ from couchish.formish_jsonbuilder import build as formish_build
 from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
 from couchish.formish_jsonbuilder import FormishWidgetRegistry, expand_definition
 from couchish.schemaish_jsonbuilder import strip_stars
-from formish import widgets
+from formish import widgets, filestore
 
 
 class Reference(schemaish.attr.Attribute):
@@ -127,19 +127,45 @@ class WidgetRegistry(FormishWidgetRegistry):
         self.defaults['Reference()'] = self.input_factory
 
 
-    def selectchoice_couchdb_factory(self, spec):
+    def selectchoice_couchdb_factory(self, spec, k):
         widgetSpec = spec.get('widget')
         label_template = widgetSpec['options']['label']
         view = widgetSpec['options']['view']
-        return SelectChoiceCouchDB(self.db, view, label_template)
+        return SelectChoiceCouchDB(self.db, view, label_template, **k)
 
-    def checkboxmultichoicetree_couchdb_factory(self, spec):
+    def checkboxmultichoicetree_couchdb_factory(self, spec, k):
         widgetSpec = spec.get('widget')
         def options(db, view):
             return [(item.id,item.doc['label']) for item in list(db.view(view, include_docs=True))]
         view = widgetSpec['options']
-        return formish.CheckboxMultiChoiceTree(options=options(self.db,view))
+        return formish.CheckboxMultiChoiceTree(options=options(self.db,view), **k)
 
+    def fileupload_factory(self, spec, k):
+        widget_spec = spec.get('widget')
+        if widget_spec is None:
+            widget_spec = {}
+        def url_ident_factory(obj):
+            print '***',obj
+            if isinstance(obj,schemaish.type.File):
+                return '%s/%s'%(obj.doc_id, obj.id)
+            elif obj:
+                return obj
+            else:
+                return None
+        root_dir = widget_spec.get('options',{}).get('root_dir',None)
+        url_base = widget_spec.get('options',{}).get('url_base',None)
+        image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
+        show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
+        show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
+        show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
+        return formish.FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
+             url_base=url_base,
+             image_thumbnail_default=image_thumbnail_default,
+             show_download_link=show_download_link,
+             show_file_preview=show_file_preview,
+             show_image_thumbnail=show_image_thumbnail,
+             url_ident_factory=url_ident_factory,
+             **k )
 
 
 def build(definition, db=None, name=None, defaults=None, errors=None, action='', widget_registry=None, type_registry=None, add_id_and_rev=False):
