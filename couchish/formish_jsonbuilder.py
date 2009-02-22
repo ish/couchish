@@ -1,6 +1,7 @@
 from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars
 import formish
 from formish import filestore
+from validatish import validator
 
 class FormishWidgetRegistry(object):
     """
@@ -28,7 +29,7 @@ class FormishWidgetRegistry(object):
                 }
 
 
-    def make_formish_widget(self, item_type, widget_spec):
+    def make_formish_widget(self,item):
         """
         Create and return a Formish widget factory for the item type and widget
         specifiction.
@@ -46,9 +47,11 @@ class FormishWidgetRegistry(object):
             item_type: the type of the value (string)
             widget_spec: a dictionary containing a widget specification
         """
+        widget_spec = item.get('widget')
+        item_type = item.get('type')
         # If there is a widget spec then that takes precedence
         if widget_spec is not None:
-            return self.registry[widget_spec['type']](widget_spec)
+            return self.registry[widget_spec['type']](item)
         # No widget spec so see if there's a user-friendly default for the data type
         default = self.defaults.get(item_type)
         if default is not None:
@@ -57,7 +60,7 @@ class FormishWidgetRegistry(object):
         return None
 
 
-    def input_factory(self, widget_spec):
+    def input_factory(self, spec):
         """
         TextInput widget factory.
 
@@ -66,7 +69,7 @@ class FormishWidgetRegistry(object):
         """
         return formish.Input()
 
-    def hidden_factory(self, widget_spec):
+    def hidden_factory(self, spec):
         """
         Hidden widget factory.
 
@@ -76,7 +79,7 @@ class FormishWidgetRegistry(object):
         return formish.Hidden()
 
 
-    def textarea_factory(self, widget_spec):
+    def textarea_factory(self, spec):
         """
         TextArea widget factory.
 
@@ -86,7 +89,7 @@ class FormishWidgetRegistry(object):
         return formish.TextArea()
 
 
-    def selectchoice_factory(self, widget_spec):
+    def selectchoice_factory(self, spec):
         """
         SelectChoice widget factory.
 
@@ -94,6 +97,7 @@ class FormishWidgetRegistry(object):
             'options': a sequence of mappings containing 'name' and
                 'description' keys.
         """
+        widget_spec = spec.get('widget')
         first = widget_spec['options'][0]
         if isinstance(first, dict):
             options = [(o['name'], o['description']) for o in widget_spec['options']]
@@ -104,7 +108,7 @@ class FormishWidgetRegistry(object):
         return formish.SelectChoice(options=options)
 
 
-    def radiochoice_factory(self, widget_spec):
+    def radiochoice_factory(self, spec):
         """
         SelectChoice widget factory.
 
@@ -112,6 +116,7 @@ class FormishWidgetRegistry(object):
             'options': a sequence of mappings containing 'name' and
                 'description' keys.
         """
+        widget_spec = spec.get('widget')
         first = widget_spec['options'][0]
         if isinstance(first, dict):
             options = [(o['name'], o['description']) for o in widget_spec['options']]
@@ -122,13 +127,14 @@ class FormishWidgetRegistry(object):
         return formish.RadioChoice(options=options)
 
 
-    def selectwithotherchoice_factory(self, widget_spec):
+    def selectwithotherchoice_factory(self, spec):
         """
         SelectChoice widget factory.
 
         Specification attributes:
             'options': a sequence of strings
         """
+        widget_spec = spec.get('widget')
         first = widget_spec['options'][0]
         if isinstance(first, dict):
             options = [(o['name'], o['description']) for o in widget_spec['options']]
@@ -139,7 +145,7 @@ class FormishWidgetRegistry(object):
         return formish.SelectWithOtherChoice(options=options)
 
 
-    def checkboxmultichoice_factory(self, widget_spec):
+    def checkboxmultichoice_factory(self, spec):
         """
         SelectChoice widget factory.
 
@@ -147,6 +153,7 @@ class FormishWidgetRegistry(object):
             'options': a sequence of mappings containing 'name' and
                 'description' keys.
         """
+        widget_spec = spec.get('widget')
         first = widget_spec['options'][0]
         if isinstance(first, dict):
             options = [(o['name'], o['description']) for o in widget_spec['options']]
@@ -156,7 +163,7 @@ class FormishWidgetRegistry(object):
             options = [(o, o) for o in widget_spec['options']]
         return formish.CheckboxMultiChoice(options=options)
 
-    def checkbox_factory(self, widget_spec):
+    def checkbox_factory(self, spec):
         """
         Checkbox widget factory.
 
@@ -166,7 +173,7 @@ class FormishWidgetRegistry(object):
         return formish.Checkbox()
 
 
-    def dateparts_factory(self, widget_spec):
+    def dateparts_factory(self, spec):
         """
         SelectChoice widget factory.
 
@@ -176,7 +183,8 @@ class FormishWidgetRegistry(object):
         return formish.DateParts(day_first=True)
 
 
-    def fileupload_factory(self,widget_spec):
+    def fileupload_factory(self, spec):
+        widget_spec = spec.get('widget')
         if widget_spec is None:
             widget_spec = {}
         def url_ident_factory(obj):
@@ -233,7 +241,7 @@ def build(definition, name=None, defaults=None, errors=None, action='', widget_r
     form = formish.Form(schema, name=name, defaults=defaults, errors=errors, action_url=action)
 
     for item in definition:
-        w = widget_registry.make_formish_widget(item['type'], item.get('widget'))
+        w = widget_registry.make_formish_widget(item)
         if w is not None:
             form[item['starkey']].widget = w
 
