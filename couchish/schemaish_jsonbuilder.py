@@ -164,6 +164,7 @@ class SchemaishTypeRegistry(object):
                 'Sequence(String())': self.list_factory('String()'),
                 'Sequence(Integer())': self.list_factory('Integer()'),
                 'Sequence(Date())': self.list_factory('Date()'),
+                'Sequence(Boolean())': self.list_factory('Boolean()'),
                 }
 
 
