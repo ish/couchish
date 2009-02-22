@@ -27,7 +27,7 @@ class CouchishStore(object):
             segments = url.split('/')
             designdoc = segments[0]
             name = '/'.join(segments[1:])
-            view = ViewDefinition(designdoc, name, view)
+            view = ViewDefinition(designdoc, name, view[0], view[1])
             view.get_doc(self.db)
             view.sync(self.db)
 

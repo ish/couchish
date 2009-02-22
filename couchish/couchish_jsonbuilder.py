@@ -58,7 +58,7 @@ $body
         out += Template(templ_if).substitute(body=out_fors)
                                                           
                     
-    return main_template.substitute(body=out)
+    return (main_template.substitute(body=out), None)
 
 
 
@@ -83,6 +83,40 @@ def build_refersto_view(uses):
     return viewdef
 
 
+
+def get_view(view, views, views_by_viewname, model_type=None):
+    if model_type is None:
+        # Then we have to have an explicit model type set if we want to use auto built views
+        model_type = view.get('model_type')
+    if 'designdoc' not in view:
+        # Then we use the type as the design doc
+        view['designdoc'] = model_type
+    if 'map' in view:
+        # Then we have explicit javascript functions
+        map = view['map']
+        reduce = view.get('reduce')
+    elif 'type' in view:
+        # Then we're auto building views if possible
+        if 'name' not in view:
+            # Use the view type for the name
+            view['name'] = view['type']
+        if view['type'] == 'all':
+            map, reduce = ("function(doc) { if (doc.model_type == '%s') { emit(doc._id, null); } }"%model_type,None)
+        if view['type'] == 'all_count':
+            map, reduce = ("function(doc) { if (doc.model_type == '%s') { emit(doc._id, 1); } }"%model_type, "function(keys, values) { return sum(values); }")
+
+    if 'url' not in view:
+        # Then we need to provide one
+        if 'designdoc' not in view:
+            # Then we use the couchish namespace
+            view['url'] = 'couchish/%s'%view['name']
+        else:
+            view['url'] = '%s/%s'%(view['designdoc'],view['name'])
+
+    views_by_viewname[view['name']] = {'url':view['url'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
+    views_by_viewname[view['name']]['map'] = (map,reduce)
+    views[view['url']] = (map,reduce)
+
 def get_views(models_definition, views_definition):
 
     views = {} 
@@ -92,20 +126,16 @@ def get_views(models_definition, views_definition):
     attributes_by_viewname = {}
 
     for view in views_definition:
-        if 'url' not in view:
-            if 'designdoc' not in view:
-                view['url'] = 'couchish/%s'%view['name']
-            else:
-                view['url'] = '%s/%s'%(view['designdoc'],view['name'])
-        views_by_viewname[view['name']] = {'url':view['url'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
-        if 'map' in view:
-            views_by_viewname[view['name']]['map'] = view['map']
-            views[view['url']] = view['map']
+        get_view(view, views, views_by_viewname)
+    for model_type, definition in models_definition.items():
+        for view in definition.get('views',[]):
+            get_view(view, views, views_by_viewname, model_type=model_type)
+
 
 
     parents = []
     field_to_view = {}
-    for type, definition in models_definition.items():
+    for model_type, definition in models_definition.items():
         for field in definition['fields']:
             # some uses need to know whether the attr is composed of any sequences
             field['key'] = strip_stars(field['name'])
@@ -127,12 +157,12 @@ def get_views(models_definition, views_definition):
 
 
                 if isinstance(uses, basestring):
-                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( fieldname )
+                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
                     viewnames_by_attribute.setdefault(uses, Set()).add(refersto)
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( fieldname.replace('.*','*') )
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,Set()).add( fieldname.replace('.*','*') )
                 else:
-                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(type,[]).append( fieldname )
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(type,Set()).add( fieldname.replace('.*','*') )
+                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,Set()).add( fieldname.replace('.*','*') )
                     for use in uses:
                         viewnames_by_attribute.setdefault(use, Set()).add(refersto)
 
@@ -141,12 +171,17 @@ def get_views(models_definition, views_definition):
                 if '*' in fieldname:
                     raise Exception('Can\'t generate viewby views on attributes in sequences')
                 if field['viewby'] == True:
-                    url = '%s/by_%s'%(type,fieldname)
+                    url = '%s/by_%s'%(model_type,fieldname)
                 else:
                     url = field['viewby']
-                views[url] = "function(doc) { if (doc.model_type=='%s') { emit(doc.%s,  null ); } }"%(type,field['name'])
-        # Add the 'all' view
-        views['%s/all'%type] = "function(doc) { if (doc.model_type == '%s') { emit(doc._id, null); } }"%type
+                views[url] = ("function(doc) { if (doc.model_type=='%s') { emit(doc.%s,  null ); } }"%(model_type,field['name']),None)
+                if 'viewby_count' in field:
+                    if field['viewby_count'] == True:
+                        url = '%s/by_%s_count'%(model_type,fieldname)
+                    else:
+                        url = field['viewby_count']
+                    views[url] = ("function(doc) { if (doc.model_type == '%s') { emit(doc._id, 1); } }"%model_type, "function(keys, values) { return sum(values); }")
+
 
 
 
