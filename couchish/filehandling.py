@@ -86,7 +86,7 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
         else:
             filestore = files
         #  add the files for attachment handling and remove the file data from document
-        if f.b64:
+        if getattr(f,'b64', None):
             filestore[fullprefix] = jsonutil.CouchishFile(f.file, f.filename, f.mimetype, f.id, b64=True)
         else:
             fh = StringIO()
