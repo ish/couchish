@@ -104,17 +104,19 @@ def get_view(view, views, views_by_viewname, model_type=None):
             map, reduce = ("function(doc) { if (doc.model_type == '%s') { emit(doc._id, null); } }"%model_type,None)
         if view['type'] == 'all_count':
             map, reduce = ("function(doc) { if (doc.model_type == '%s') { emit(doc._id, 1); } }"%model_type, "function(keys, values) { return sum(values); }")
+    else:
+        map = build_refersto_view(view['uses'])
+        reduce = view.get('reduce')
 
     if 'url' not in view:
         # Then we need to provide one
-        if 'designdoc' not in view:
+        if view['designdoc'] is None:
             # Then we use the couchish namespace
-            view['url'] = 'couchish/%s'%view['name']
+            raise KeyError('Cannot work out a design doc for view %s'%view.get('name'))
         else:
             view['url'] = '%s/%s'%(view['designdoc'],view['name'])
-
-    views_by_viewname[view['name']] = {'url':view['url'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
-    views_by_viewname[view['name']]['map'] = (map,reduce)
+    views_by_viewname[view['url']] = {'url':view['url'], 'key': view.get('key','_id'), 'uses': view.get('uses')}
+    views_by_viewname[view['url']]['map'] = (map,reduce)
     views[view['url']] = (map,reduce)
 
 def get_views(models_definition, views_definition):
@@ -150,10 +152,6 @@ def get_views(models_definition, views_definition):
                 view = views_by_viewname[refersto]
                 uses = view['uses']
                 # Build the reference views dynamically if not explicit
-                if 'map' not in view:
-                        map = build_refersto_view(uses)
-                        view['map'] = map
-                        views[view['url']] = map
 
 
                 if isinstance(uses, basestring):
