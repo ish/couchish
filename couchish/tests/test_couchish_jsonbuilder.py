@@ -55,9 +55,6 @@ class Test(unittest.TestCase):
         models_definition = {'author': author_definition, 'post': post_definition}
         
         viewdata = get_views(models_definition, views_definition)
-        print '*'*80
-        print viewdata
-        print '*'*80
         assert simplifyjs(viewdata['views']['author/by_last_name'][0]) == "function(doc){if(doc.model_type=='author'){emit(doc.last_name,null)}}"
         assert simplifyjs(viewdata['views']['post/all'][0]) == "function(doc){if(doc.model_type=='post'){emit(doc._id,null)}}"
 
