@@ -6,5 +6,5 @@ fields:
 
 - name: authors.*.nested
   type: Reference()
-  refersto: author_name
+  refersto: couchish/author_name
 

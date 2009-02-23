@@ -9,5 +9,5 @@ fields:
 
 - name: people.*.authors.*.nested
   type: Reference()
-  refersto: author_name
+  refersto: couchish/author_name
 

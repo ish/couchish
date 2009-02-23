@@ -1,4 +1,5 @@
 - name: author_name
+  designdoc: couchish
   map : |
     function(doc) {
         if (model_type=='author') {

@@ -6,10 +6,10 @@ fields:
 
 - name: metadata.writtenby
   type: Reference()
-  refersto: author_name
+  refersto: couchish/author_name
 
 - name: metadata.coauthored
   type: Reference()
-  refersto: author_surname
+  refersto: couchish/author_surname
 
 

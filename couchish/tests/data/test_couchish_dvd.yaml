@@ -4,7 +4,7 @@ fields:
 
 - name: writtenby
   type: Reference()
-  refersto: author_surname
+  refersto: customdesigndoc/author_surname
 
 
 

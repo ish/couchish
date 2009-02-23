@@ -1,2 +1,3 @@
 - name: author_name
+  designdoc: couchish
   uses: [author.first_name, author.last_name]

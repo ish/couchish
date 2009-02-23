@@ -3,7 +3,7 @@ fields:
 
 - name: authors
   type: Sequence(Reference())
-  refersto: author_name
+  refersto: couchish/author_name
 
 
 

@@ -3,6 +3,7 @@ fields:
 
 - name: author
   type: Reference()
-  refersto: author_name
+  refersto: couchish/author_name
 
-
+views:
+  - type: all
