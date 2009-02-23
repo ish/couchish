@@ -48,7 +48,7 @@ def file_from_dict(obj):
         data = obj['file']
         return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline)
     else:
-        raise Exception('No file data?')
+        return CouchishFile(None, filename, mimetype, id=id, doc_id=doc_id)
 
 
 pythonjson.json.register_type(File, file_to_dict, file_from_dict, "file")
