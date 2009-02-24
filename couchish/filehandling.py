@@ -72,7 +72,6 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
 
 
 def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
-    print 'f, of', f, of
     if f.file is None:
         # if we have no original data then we presume the file should remain unchanged
         f.id = of.id
