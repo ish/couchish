@@ -26,6 +26,7 @@ class FormishWidgetRegistry(object):
                 'String()': self.input_factory,
                 'Integer()': self.input_factory,
                 'File()': self.fileupload_factory,
+                'Boolean()': self.checkbox_factory,
                 }
 
 
