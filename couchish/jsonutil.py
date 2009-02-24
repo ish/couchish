@@ -59,11 +59,16 @@ pythonjson.encode_mapping[CouchishFile] = ('file',file_to_dict)
 
 
 def wrap_encode_to_dict(obj):
-    obj = add_id_and_attr_to_files(obj)
     return pythonjson.encode_to_dict(obj)
 
+def wrap_decode_from_dict(d):
+    obj = pythonjson.decode_from_dict(d)
+    obj = add_id_and_attr_to_files(obj)
+    return obj
+
+
 encode_to_dict = wrap_encode_to_dict
-decode_from_dict = pythonjson.decode_from_dict
+decode_from_dict = wrap_decode_from_dict
 
 def add_id_and_attr_to_files(data):
     if not isinstance(data, dict):
