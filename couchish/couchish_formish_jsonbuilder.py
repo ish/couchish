@@ -174,7 +174,12 @@ def build(definition, db=None, name=None, defaults=None, errors=None, action='',
     if type_registry is None:
         type_registry=TypeRegistry()
     if add_id_and_rev is True:
+        # Copy the definition fict and its fields item so we can make changes
+        # without affecting the spec.
+        definition = dict(definition)
+        definition['fields'] = list(definition['fields'])
         definition['fields'].insert(0, {'name': '_rev', 'widget':{'type': 'Hidden()'}})
         definition['fields'].insert(0, {'name': '_id', 'widget':{'type': 'Hidden()'}})
     form = formish_build(definition, name=name, defaults=defaults, errors=errors, action=action, widget_registry=widget_registry, type_registry=type_registry)
     return form
+
