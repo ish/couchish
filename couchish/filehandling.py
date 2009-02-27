@@ -75,8 +75,10 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
     if f.file is None:
         # if we have no original data then we presume the file should remain unchanged
         f.id = of.id
-        f.mimetype = of.mimetype
-        f.filename = of.filename
+        if f.mimetype is None:
+            f.mimetype = of.mimetype
+        if f.filename is None:
+            f.filename = of.filename
     else:
         if of and hasattr(of,'id'):
             f.id = of.id
