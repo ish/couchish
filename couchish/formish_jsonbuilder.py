@@ -1,4 +1,4 @@
-from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars
+from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars, split_prefix
 import formish, schemaish
 from formish import filestore
 from validatish import validator
@@ -11,22 +11,22 @@ class FormishWidgetRegistry(object):
     """
     def __init__(self):
         self.registry = {
-                'Input()': self.input_factory,
-                'Hidden()': self.hidden_factory,
-                'TextArea()': self.textarea_factory,
-                'SelectChoice()': self.selectchoice_factory,
-                'SelectWithOtherChoice()': self.selectwithotherchoice_factory,
-                'Checkbox()': self.checkbox_factory,
-                'CheckboxMultiChoice()': self.checkboxmultichoice_factory,
-                'RadioChoice()': self.radiochoice_factory,
-                'DateParts()': self.dateparts_factory,
+                'Input': self.input_factory,
+                'Hidden': self.hidden_factory,
+                'TextArea': self.textarea_factory,
+                'SelectChoice': self.selectchoice_factory,
+                'SelectWithOtherChoice': self.selectwithotherchoice_factory,
+                'Checkbox': self.checkbox_factory,
+                'CheckboxMultiChoice': self.checkboxmultichoice_factory,
+                'RadioChoice': self.radiochoice_factory,
+                'DateParts': self.dateparts_factory,
                 }
         self.defaults = {
-                'Date()': self.dateparts_factory,
-                'String()': self.input_factory,
-                'Integer()': self.input_factory,
-                'File()': self.fileupload_factory,
-                'Boolean()': self.checkbox_factory,
+                'Date': self.dateparts_factory,
+                'String': self.input_factory,
+                'Integer': self.input_factory,
+                'File': self.fileupload_factory,
+                'Boolean': self.checkbox_factory,
                 }
 
 
@@ -210,30 +210,21 @@ formish_widget_registry = FormishWidgetRegistry()
 
 def expand_definition(pre_expand_definition):
     definition = []
-    for field in pre_expand_definition['fields']:
-        item = {}
-        item['key'] = strip_stars(field['name'])
-        item['starkey'] = field['name']
-        if field.get('title') == '':
-            item['title'] = None
+    for item in pre_expand_definition['fields']:
+        field = {}
+        field['name'] = item['name']
+        field['fullkey'] = strip_stars(item['name'])
+        field['keyprefix'], field['key'] = split_prefix(field['fullkey'])
+        field['starkey'] = item['name']
+        field['title'] = item.get('title')
+        field['description'] = item.get('description')
+        field['type'] = item.get('type','String')
+        if item.get('required') is True:
+            field['validator'] = validator.Required()
         else:
-            item['title'] = field.get('title')
-        item['description'] = field.get('description')
-        item['type'] = field.get('type','String()')
-        if field.get('required') is True:
-            item['validator'] = validator.Required()
-        else:
-            item['validator'] = None
-        if 'widget' in field and field['widget'] != {}:
-            w = field['widget']
-            item['widget'] = {}
-            if 'type' in w:
-                item['widget']['type'] = w['type']
-            if 'options' in w:
-                item['widget']['options'] = w['options']
-            if 'css_class' in w:
-                item['widget']['css_class'] = w['css_class']
-        definition.append(item)
+            field['validator'] = None
+        field['widget'] = item.get('widget')
+        definition.append(field)
     return definition
 
 

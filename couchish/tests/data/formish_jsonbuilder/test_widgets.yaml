@@ -1,43 +1,45 @@
 fields:
 - name: input
-  type: String()
+  type: String
   widget:
-    type: Input()
+    type: Input
 
 
 - name: hidden
-  type: String()
+  type: String
   widget:
-    type: Hidden()
+    type: Hidden
 
 
 - name: textarea
-  type: String()
+  type: String
   widget:
-    type: TextArea()
+    type: TextArea
 
 - name: selectchoice
-  type: String()
+  type: String
   widget:
-    type: SelectChoice()
+    type: SelectChoice
     options: [One, Two, Three]
 
 - name: radiochoice
-  type: String()
+  type: String
   widget:
-    type: RadioChoice()
+    type: RadioChoice
     options: [One, Two, Three]
 
 - name: selectwithotherchoice
-  type: String()
+  type: String
   widget:
-    type: SelectWithOtherChoice()
+    type: SelectWithOtherChoice
     options: [One, Two, Three]
 
 
 - name: checkboxmultichoice
-  type: Sequence(String())
+  type: Sequence
+  attr:
+    type: String
   widget:
-    type: CheckboxMultiChoice()
+    type: CheckboxMultiChoice
     options: [One, Two, Three, Four, Five]
 

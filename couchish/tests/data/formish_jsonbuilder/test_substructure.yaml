@@ -4,7 +4,7 @@ fields:
 - name: last_name
 
 - name: address
-  type: Structure()
+  type: Structure
 
 - name: address.street
 

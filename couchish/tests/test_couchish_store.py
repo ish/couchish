@@ -6,15 +6,13 @@ import couchdb
 from couchish import config, errors, store
 from copy import copy
 
-def data_filename(filename):
+def data_filename(filename, namespace=None):
+    if namespace:
+        return os.path.join('couchish/tests/data/%s'%namespace, filename)
     return os.path.join('couchish/tests/data', filename)
 
 def type_filename(type,namespace=None):
-    if namespace:
-        namespace = '_%s'%namespace
-    else:
-        namespace = ''
-    return data_filename('test_couchish%s_%s.yaml' % (namespace,type))
+    return data_filename('test_couchish_%s.yaml' % type, namespace)
 
 db_name = 'test-couchish'
 

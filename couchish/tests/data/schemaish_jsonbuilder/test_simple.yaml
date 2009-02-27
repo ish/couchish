@@ -1,0 +1,8 @@
+fields:
+- name: first_name
+
+- name: last_name
+
+- name: birthday
+  type: Date
+

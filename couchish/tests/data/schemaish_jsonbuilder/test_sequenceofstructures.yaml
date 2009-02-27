@@ -1,0 +1,19 @@
+fields:
+- name: first_name
+
+- name: last_name
+
+- name: addresses
+  type: Sequence
+  attr: 
+    type: Structure
+
+- name: addresses.*.street
+
+- name: addresses.*.city
+
+- name: addresses.*.postcode
+
+- name: addresses.*.country
+ 
+ 

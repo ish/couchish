@@ -4,7 +4,9 @@ fields:
 - name: last_name
 
 - name: addresses
-  type: Sequence(Structure())
+  type: Sequence
+  attr: 
+    type: Structure
 
 - name: addresses.*.street
 

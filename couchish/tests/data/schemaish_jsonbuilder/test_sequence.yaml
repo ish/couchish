@@ -1,0 +1,10 @@
+fields:
+- name: first_name
+
+- name: last_name
+
+- name: countries
+  type: Sequence
+  attr:
+    type: String
+

@@ -44,7 +44,7 @@ class TestFiles(unittest.TestCase):
     def test_addition_file(self):
         from schemaish.type import File
         # create a file
-        fh = open('couchish/tests/data/test.txt','r')
+        fh = open('couchish/tests/data/files/test.txt','r')
         f = jsonutil.CouchishFile(fh, 'test.txt','text/plain')
         
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f}
@@ -70,7 +70,7 @@ class TestFiles(unittest.TestCase):
         from schemaish.type import File
 
         # create a file
-        fh = open('couchish/tests/data/test.txt','r')
+        fh = open('couchish/tests/data/files/test.txt','r')
         f = jsonutil.CouchishFile(fh, 'test.txt','text/plain')
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f}
         with self.S.session() as S:
@@ -91,7 +91,7 @@ class TestFiles(unittest.TestCase):
         assert matt['_attachments'][matt['photo'].id] == {'stub': True, 'length': 78, 'content_type': 'text/plain'}
 
         # now lets replace the file
-        fh = open('couchish/tests/data/test-changed.txt','r')
+        fh = open('couchish/tests/data/files/test-changed.txt','r')
         f = jsonutil.CouchishFile(fh, 'test-changed.txt','text/plain')
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f}
         with self.S.session() as S:
@@ -116,7 +116,7 @@ class TestFiles(unittest.TestCase):
         from schemaish.type import File
 
         # create a file
-        fh = open('couchish/tests/data/test.txt','r')
+        fh = open('couchish/tests/data/files/test.txt','r')
         f = File(fh, 'test.txt','text/plain')
         matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f}
         with self.S.session() as S:
@@ -149,7 +149,7 @@ class TestFiles(unittest.TestCase):
         from schemaish.type import File
 
         # create a file
-        fh = open('couchish/tests/data/test.txt','r')
+        fh = open('couchish/tests/data/files/test.txt','r')
         f = File(fh, 'test.txt','text/plain')
         matt = {'model_type': 'book', 'first_name': 'Matt', 'last_name': 'Goodall','photo':[ f ]}
         with self.S.session() as S:
@@ -163,7 +163,7 @@ class TestFiles(unittest.TestCase):
         assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
         assert  hasattr(matt['photo'][0],'id')
     
-        fh2 = open('couchish/tests/data/test-changed.txt','r')
+        fh2 = open('couchish/tests/data/files/test-changed.txt','r')
         f2 = File(fh2, 'test2.txt','text/plain')
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
@@ -187,7 +187,7 @@ class TestFiles(unittest.TestCase):
         assert matt['_attachments'][ matt['photo'][0].id ] == {'stub': True, 'length': 21, 'content_type': 'text/plain'}
 
     def test_unchanged_file(self):
-        fh = open('couchish/tests/data/test.txt','r')
+        fh = open('couchish/tests/data/files/test.txt','r')
         f = File(fh, 'test.txt','text/plain')
         matt = {'model_type': 'book', 'first_name': 'Matt', 'last_name': 'Goodall','photo': f }
 

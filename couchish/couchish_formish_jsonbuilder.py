@@ -122,9 +122,9 @@ class WidgetRegistry(FormishWidgetRegistry):
     def __init__(self, db=None):
         self.db = db
         FormishWidgetRegistry.__init__(self)
-        self.registry['SelectChoiceCouchDB()'] = self.selectchoice_couchdb_factory
-        self.registry['CheckboxMultiChoiceTreeCouchDB()'] = self.checkboxmultichoicetree_couchdb_factory
-        self.defaults['Reference()'] = self.input_factory
+        self.registry['SelectChoiceCouchDB'] = self.selectchoice_couchdb_factory
+        self.registry['CheckboxMultiChoiceTreeCouchDB'] = self.checkboxmultichoicetree_couchdb_factory
+        self.defaults['Reference'] = self.input_factory
 
 
     def selectchoice_couchdb_factory(self, spec, k):
@@ -145,7 +145,6 @@ class WidgetRegistry(FormishWidgetRegistry):
         if widget_spec is None:
             widget_spec = {}
         def url_ident_factory(obj):
-            print '***',obj
             if isinstance(obj,schemaish.type.File):
                 return '%s/%s'%(obj.doc_id, obj.id)
             elif obj:
@@ -178,8 +177,8 @@ def build(definition, db=None, name=None, defaults=None, errors=None, action='',
         # without affecting the spec.
         definition = dict(definition)
         definition['fields'] = list(definition['fields'])
-        definition['fields'].insert(0, {'name': '_rev', 'widget':{'type': 'Hidden()'}})
-        definition['fields'].insert(0, {'name': '_id', 'widget':{'type': 'Hidden()'}})
+        definition['fields'].insert(0, {'name': '_rev', 'widget':{'type': 'Hidden'}})
+        definition['fields'].insert(0, {'name': '_id', 'widget':{'type': 'Hidden'}})
     form = formish_build(definition, name=name, defaults=defaults, errors=errors, action=action, widget_registry=widget_registry, type_registry=type_registry)
     return form
 

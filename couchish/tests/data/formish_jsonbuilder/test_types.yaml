@@ -1,0 +1,47 @@
+fields:
+- name: string
+  type: String
+
+- name: integer
+  type: Integer
+
+- name: float
+  type: Float
+
+- name: boolean
+  type: Boolean
+
+- name: decimal
+  type: Decimal
+
+- name: date
+  type: Date
+
+- name: file
+  type: File
+
+
+- name: sequence_string
+  type: Sequence
+  attr:
+    type: String
+
+- name: sequence_integer
+  type: Sequence
+  attr:
+    type: Integer
+
+- name: sequence_date
+  type: Sequence
+  attr: 
+    type: Date
+
+- name: sequence_sequence_string
+  type: Sequence
+  attr:
+    type: Sequence
+    attr: 
+      type: String
+
+
+

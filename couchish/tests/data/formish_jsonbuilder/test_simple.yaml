@@ -4,5 +4,5 @@ fields:
 - name: last_name
 
 - name: birthday
-  type: Date()
+  type: Date
 

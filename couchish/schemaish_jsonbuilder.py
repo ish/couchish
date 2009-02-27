@@ -91,48 +91,16 @@ def descendant_key_part(item, ancestor):
     return item[len(ancestor):]
 
 
-def walk_definition(definition):
-    """
-    Walk the definition keys hierarchy (depth first) generating a sequence of
-    (parents, items) tuples, where parents is a sequence of parents with the
-    closest parent at the end.
-    """
-
-    # Set up a stack to track the parent, None parent to start with.
-    stack = [(None, [])]
-
-    for item in definition:
-
-        # Unwind the stack, yielding as we go
-        while True:
-            parent, children = stack[-1]
-            if parent is None or item['key'].startswith(parent['key']):
-                break
-            parents = [i[0] for i in stack if i[0] is not None]
-            yield parents, stack.pop()[1]
-
-        # Grab the top of the stack
-        parent, children = stack[-1]
-
-        if item['type'] in ['Structure()','Sequence(Structure())']:
-            children.append(item)
-            stack.append((item, []))
-        else:
-            children.append(item)
-
-    # Unwind and yield the remaining stack
-    while True:
-        if not stack:
-            break
-        parents = [i[0] for i in stack if i[0] is not None]
-        yield parents, stack.pop()[1]
-
 def strip_stars(key):
     outkey = []
     for k in key.split('.'):
         if k != '*':
             outkey.append(k)
     return '.'.join(outkey)
+
+def split_prefix(key):
+    segments = key.split('.')
+    return '.'.join(segments[:-1]), segments[-1]
 
 
 def rec_getattr(obj, attr):
@@ -146,151 +114,118 @@ def rec_setattr(obj, attr, value):
 
 class SchemaishTypeRegistry(object):
     """
-    Registry for converting an item's type specification to a schemaish type
+    Registry for converting an field's type specification to a schemaish type
     instance.
     """
-
+    
     def __init__(self):
         self.registry = {
-                'String()': self.string_factory,
-                'Integer()': self.integer_factory,
-                'Float()': self.float_factory,
-                'Boolean()': self.boolean_factory,
-                'Decimal()': self.decimal_factory,
-                'Date()': self.date_factory,
-                'Time()': self.time_factory,
-                'DateTime()': self.datetime_factory,
-                'File()': self.file_factory,
-                'Sequence(String())': self.list_factory('String()'),
-                'Sequence(Integer())': self.list_factory('Integer()'),
-                'Sequence(Date())': self.list_factory('Date()'),
-                'Sequence(Boolean())': self.list_factory('Boolean()'),
+                'String': self.string_factory,
+                'Integer': self.integer_factory,
+                'Float': self.float_factory,
+                'Boolean': self.boolean_factory,
+                'Decimal': self.decimal_factory,
+                'Date': self.date_factory,
+                'Time': self.time_factory,
+                'DateTime': self.datetime_factory,
+                'File': self.file_factory,
+                'Sequence': self.list_factory,
+                'Tuple': self.tuple_factory,
+                'Structure': self.structure_factory,
                 }
+        self.default_type = 'String'
 
 
-    def make_schemaish_type(self, item_type, **k):
-        """
-        Map the definition string to a real schemaish type
-        XXX: Make the tuple and sequence types work more intelligently (i.e. you shouldn't
-        have to match on String, Interger, Date separately)
-        """
-        if 'Tuple(' in item_type:
-            types = ''.join(item_type[7:-1]).split(',')
-            return self.tuple_factory(types, **k)
-        type_factory = self.registry[item_type]
-        return type_factory(**k)
+    def make_schemaish_type(self, field):
+        field_type = field.get('type',self.default_type)
+        return self.registry[field_type](field)
 
 
-    def string_factory(self, **k):
-        return schemaish.String(**k)
+    def string_factory(self, field):
+        return schemaish.String(**field)
 
+    def integer_factory(self, field):
+        return schemaish.Integer(**field)
 
-    def integer_factory(self, **k):
-        return schemaish.Integer(**k)
+    def float_factory(self, field):
+        return schemaish.Float(**field)
 
+    def boolean_factory(self, field):
+        return schemaish.Boolean(**field)
 
-    def float_factory(self, **k):
-        return schemaish.Float(**k)
+    def decimal_factory(self, field):
+        return schemaish.Decimal(**field)
 
+    def date_factory(self, field):
+        return schemaish.Date(**field)
 
-    def boolean_factory(self, **k):
-        return schemaish.Boolean(**k)
+    def time_factory(self, field):
+        return schemaish.Time(**field)
 
+    def datetime_factory(self, field):
+        return schemaish.DateTime(**field)
 
-    def decimal_factory(self, **k):
-        return schemaish.Decimal(**k)
+    def file_factory(self, field):
+        return schemaish.File(**field)
 
-
-    def date_factory(self, **k):
-        return schemaish.Date(**k)
-
-    def time_factory(self, **k):
-        return schemaish.Time(**k)
-
-    def datetime_factory(self, **k):
-        return schemaish.DateTime(**k)
-
-    def file_factory(self, **k):
-        return schemaish.File(**k)
-
-
-    def list_factory(self, subtype, **k):
-        def f(**k):
-            return schemaish.Sequence(self.make_schemaish_type(subtype), **k)
-        return f
+    def list_factory(self, field):
+        attr = field.pop('attr')
+        attr_type = self.make_schemaish_type(attr)
+        return schemaish.Sequence(attr_type, **field)
     
-    def tuple_factory(self, subtypes, **k):
-        return schemaish.Tuple([self.make_schemaish_type(subtype) for subtype in subtypes], **k)
+    def tuple_factory(self, field):
+        return schemaish.Tuple(**field)
 
+    def structure_factory(self, field):
+        return schemaish.Structure(**field)
 
 schemaish_type_registry=SchemaishTypeRegistry()
 
 def expand_definition(pre_expand_definition):
     definition = []
-    for field in pre_expand_definition['fields']:
-        item = field
-        item['key'] = strip_stars(field['name'])
-        item['starkey'] = field['name']
-        if field.get('title') == '':
-            item['title'] = None
+    for item in pre_expand_definition['fields']:
+        field = {}
+        field['name'] = item['name']
+        field['fullkey'] = strip_stars(item['name'])
+        field['keyprefix'], field['key'] = split_prefix(field['fullkey'])
+        field['starkey'] = item['name']
+        field['title'] = item.get('title')
+        field['description'] = item.get('description')
+        field['type'] = item.get('type','String')
+        field['attr'] = item.get('attr')
+        if item.get('required') is True:
+            field['validator'] = validator.Required()
         else:
-            item['title'] = field.get('title')
-        item['description'] = field.get('description')
-        item['type'] = field.get('type','String()')
-        if field.get('required') is True:
-            item['validator'] = validator.Required()
-        else:
-            item['validator'] = None
-        definition.append(item)
+            field['validator'] = None
+        definition.append(field)
     return definition
 
+def get_nested_attr(schema_type):
+    if hasattr(schema_type, 'attr'):
+        return get_nested_attr(schema_type.attr)
+    else:
+        return schema_type
 
 def build(definition, type_registry=schemaish_type_registry):
     definition = expand_definition(definition)
     schema = schemaish.Structure()
-    cache = {}    
-    for parents, children in walk_definition(definition):
+    schema_pointer_hash = {'': schema}
+    for field in definition:
+        if 'name' not in field:
+            continue
+        fullkey = field['fullkey']
+        keyprefix = field['keyprefix']
+        key = field['key']
 
-        if parents:
-            parent = parents[-1]
-        else:
-            parent = None
+        try:
+            S = schema_pointer_hash[keyprefix]
+        except KeyError: 
+            raise KeyError('It is likely that you haven\'t defined your keys in the right order. A field must exist before sub-fields are encountered')
+        schema_type = type_registry.make_schemaish_type(field)
+        S.add( key, schema_type )
 
-        # Decide how children will be added.
-        #
-        # When there is a parent we add to a list, cached against the parent's
-        # key, so that the children can be added later (we're walking depth
-        # first). When there's no parent we can add directly to the form.
-        if parent is None:
-            child_adder = lambda s: schema.add(*s)
-        else:
-            child_items = []
-            cache[parent['key']] = child_items
-            child_adder = child_items.append
-
-        for item in children:
-
-            # Calculate the form item's key
-            schemaish_key = relative_schemaish_key(item, parent)
-
-            if item['type'] == 'Structure()':
-                # Create a Group, add the cached children and add the group itself.
-                group = schemaish.Structure()
-                for child in cache.pop(item['key']):
-                    group.add(*child)
-                child_adder((schemaish_key, group))
-            elif item['type'] == 'Sequence(Structure())':
-                group = schemaish.Structure()
-                for child in cache.pop(item['key']):
-                    group.add(*child)
-                child_adder((schemaish_key, schemaish.Sequence(group)))
-            else:
-                # Create and add a field.
-                schemaish_type = type_registry.make_schemaish_type(
-                    item.get('type','String()'), **item )
-
-                child_adder((schemaish_key, schemaish_type))
-                
+        schema_pointer_hash[fullkey] = get_nested_attr(schema_type)
+            
     return schema
         
         

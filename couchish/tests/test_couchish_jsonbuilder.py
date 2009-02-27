@@ -48,9 +48,9 @@ class Test(unittest.TestCase):
 
     
     def test_viewby(self):
-        post_definition = yaml.load( open(DATADIR%'test_couchish_by_post.yaml').read() )
-        author_definition = yaml.load( open(DATADIR%'test_couchish_by_author.yaml').read() )
-        views_definition = yaml.load( open(DATADIR%'test_couchish_by_views.yaml').read() )
+        post_definition = yaml.load( open(DATADIR%'by/test_couchish_by_post.yaml').read() )
+        author_definition = yaml.load( open(DATADIR%'by/test_couchish_by_author.yaml').read() )
+        views_definition = yaml.load( open(DATADIR%'by/test_couchish_by_views.yaml').read() )
 
         models_definition = {'author': author_definition, 'post': post_definition}
         
@@ -71,7 +71,6 @@ class Test(unittest.TestCase):
         models_definition = {'book': book_definition, 'author': author_definition,'post': post_definition, 'dvd': dvd_definition}
         viewdata = get_views(models_definition, views_definition)
         for url, view in viewdata['views'].items():
-            print 'url:',repr(url), 'view',repr(view)
             designdoc = url.split('/')[0]
             view = ViewDefinition(designdoc, url, view[0])
             view.get_doc(self.db)
@@ -79,9 +78,9 @@ class Test(unittest.TestCase):
 
 
     def test_autoviews(self):
-        post_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_post.yaml').read() )
-        author_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_author.yaml').read() )
-        views_definition = yaml.load( open(DATADIR%'test_couchish_autoviews_views.yaml').read() )
+        post_definition = yaml.load( open(DATADIR%'autoviews/test_couchish_post.yaml').read() )
+        author_definition = yaml.load( open(DATADIR%'autoviews/test_couchish_author.yaml').read() )
+        views_definition = yaml.load( open(DATADIR%'autoviews/test_couchish_views.yaml').read() )
 
         models_definition = {'author': author_definition, 'post': post_definition}
         

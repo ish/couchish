@@ -4,5 +4,7 @@ fields:
 - name: last_name
 
 - name: countries
-  type: Sequence(String())
+  type: Sequence
+  attr:
+    type: String
 

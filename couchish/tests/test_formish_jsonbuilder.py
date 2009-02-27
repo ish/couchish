@@ -2,7 +2,7 @@ import unittest
 from couchish.formish_jsonbuilder import build
 import yaml
 
-DATADIR = 'couchish/tests/data/%s'
+DATADIR = 'couchish/tests/data/formish_jsonbuilder/%s'
 
 def get_schema(filename):
     definition = yaml.load( open(DATADIR%filename).read() )
@@ -33,7 +33,7 @@ class Test(unittest.TestCase):
         schema = get_schema('test_types.yaml')
         keys = [ k for k,v in schema.attrs]
         expected = ['string', 'integer', 'float', 'boolean', 'decimal', 'date',
-               'file', 'sequence_string', 'sequence_integer', 'sequence_date']
+               'file', 'sequence_string', 'sequence_integer', 'sequence_date','sequence_sequence_string']
         assert keys == expected
         for attr in schema.attrs:
             firstbit = attr[0].split('_')[0]
