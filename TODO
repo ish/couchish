@@ -9,10 +9,41 @@ Currently there is a little bit of magic going on when setting up sequences...
   type: Sequence(String())
 
 Which was nice until we realised that you couldn't apply a widget separately to
-the Sequence and the String.. The syntax should change to ..
+the Sequence and the String. The syntax for a sequence of sequences of strings
+should change to ..
 
 - name: foo
   type: Sequence()
+  widget:
+    type: CustomSequenceWidget()
+  attr:
+    type: Sequence()
+    attr:
+        type: String()
 
-- name: foo.*
-  tyoe: String()
+- name: foo.*.*
+  widget:
+    type: CustomStringItemWidget()
+
+
+Removing the parenthes?
+-----------------------
+
+I think the parenthese might be removable after the "Change the Sequence Setup"
+is fixed. The 'type' used to try to look like the Python code but that turned
+out to be wrong; after the change 'type' becomes just the name of the factory
+(class name, typically) to call.
+
+- name: foo
+  type: Sequence
+  widget:
+    type: CustomSequenceWidget
+  attr:
+    type: Sequence
+    attr:
+        type: String
+
+- name: foo.*.*
+  widget:
+    type: CustomStringItemWidget
+
