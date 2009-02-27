@@ -218,7 +218,9 @@ class CouchishStoreSession(object):
             current = current.replace('*','')
 
             prefix.append(current)
-            current_ref = ref_doc[current]
+            current_ref = ref_doc.get(current)
+            if current_ref is None:
+                return
             if is_seq:
                 for ref_doc_ref in current_ref:
                     self._find_and_match_nested_item(ref_doc_ref, segments, ref_data, prefix)
