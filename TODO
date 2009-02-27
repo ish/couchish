@@ -1,0 +1,18 @@
+
+
+Change the Sequence Setup 
+-------------------------
+
+Currently there is a little bit of magic going on when setting up sequences...
+
+- name: foo
+  type: Sequence(String())
+
+Which was nice until we realised that you couldn't apply a widget separately to
+the Sequence and the String.. The syntax should change to ..
+
+- name: foo
+  type: Sequence()
+
+- name: foo.*
+  tyoe: String()
