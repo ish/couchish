@@ -1,24 +1,16 @@
 from __future__ import with_statement
 
 import unittest
-import uuid
 
-import couchdb
 from couchish import config, store
+from couchish.tests import util
 
 
-class TestCase(unittest.TestCase):
+class TestStore(util.TempDatabaseMixin, unittest.TestCase):
 
     def setUp(self):
-        self.db_name = 'couchish-' + str(uuid.uuid4())
-        self.db = couchdb.Server().create(self.db_name)
+        super(TestStore, self).setUp()
         self.store = store.CouchishStore(self.db, config.Config({}, {}))
-
-    def tearDown(self):
-        del couchdb.Server()[self.db_name]
-
-
-class TestStore(TestCase):
 
     def test_session(self):
         S = self.store.session()

@@ -4,6 +4,7 @@ import os.path
 import uuid
 import couchdb
 from couchish import config, errors, store
+from couchish.tests import util
 from copy import copy
 
 def data_filename(filename, namespace=None):
@@ -21,6 +22,7 @@ def strip_id_rev(doc):
     couchdoc.pop('_id')
     couchdoc.pop('_rev')
     return couchdoc
+
 
 class Test(unittest.TestCase):
 
@@ -147,6 +149,40 @@ class TestDeep(unittest.TestCase):
         assert book == {'model_type': 'book', 'title': 'Title', 'metadata': {
                             'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'},
                             'coauthored': {'_ref': tim_id, 'last_name': 'Parkin'}}}
+
+
+class TestDeep2(util.TempDatabaseMixin, unittest.TestCase):
+
+    def test_missing_ref_container(self):
+        """
+        Check references inside non-existant containers.
+
+        The flush hook drills into the document hunting for references but it
+        should check that whatever a reference is inside actually exists first.
+        """
+        cfg = config.Config({
+            'author': {'fields': [
+                {'name': 'name'}
+            ]},
+            'book': {'fields': [
+                {'name': 'title'},
+                {'name': 'author', 'type': 'Reference()', 'refersto': 'test/author_summary'},
+                {'name': 'authors', 'type': 'Sequence(Reference())', 'refersto': 'test/author_summary'},
+            ]},
+            },
+            [{'name': 'author_summary', 'designdoc': 'test', 'uses': ['author.name']}])
+        couchish_store = store.CouchishStore(self.db, cfg)
+        couchish_store.sync_views()
+        S = couchish_store.session()
+        author_id = S.create({'model_type': 'author', 'name': 'Matt'})
+        book_id = S.create({'model_type': 'book', 'title': 'My First Colouring Book',
+                            'author': {'_ref': author_id, 'name': 'Matt'}})
+        S.flush()
+        # XXX Shouldn't need to do create a new session to make more changes.
+        S = couchish_store.session()
+        author = S.doc_by_id(author_id)
+        author['name'] = 'Jessica'
+        S.flush()
 
 
 class TestRefsInSequences(unittest.TestCase):
