@@ -219,6 +219,7 @@ def expand_definition(pre_expand_definition):
         field['title'] = item.get('title')
         field['description'] = item.get('description')
         field['type'] = item.get('type','String')
+        field['attr'] = item.get('attr')
         if item.get('required') is True:
             field['validator'] = validator.Required()
         else:
