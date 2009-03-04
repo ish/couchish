@@ -1,10 +1,8 @@
 from __future__ import with_statement
 import unittest
 import os.path
-import uuid
 import couchdb
 from couchish import config, store
-from copy import copy
 from schemaish.type import File
 from couchish import jsonutil
 
@@ -42,7 +40,6 @@ class TestFiles(unittest.TestCase):
 
 
     def test_addition_file(self):
-        from schemaish.type import File
         # create a file
         fh = open('couchish/tests/data/files/test.txt','r')
         f = jsonutil.CouchishFile(fh, 'test.txt','text/plain')
@@ -67,7 +64,6 @@ class TestFiles(unittest.TestCase):
 
 
     def test_change_file(self):
-        from schemaish.type import File
 
         # create a file
         fh = open('couchish/tests/data/files/test.txt','r')
@@ -113,7 +109,6 @@ class TestFiles(unittest.TestCase):
 
 
     def test_remove_file(self):
-        from schemaish.type import File
 
         # create a file
         fh = open('couchish/tests/data/files/test.txt','r')
@@ -146,7 +141,6 @@ class TestFiles(unittest.TestCase):
         assert matt['photo'] == None
 
     def test_moving_in_sequence(self):
-        from schemaish.type import File
 
         # create a file
         fh = open('couchish/tests/data/files/test.txt','r')

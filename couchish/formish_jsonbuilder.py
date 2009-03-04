@@ -1,5 +1,5 @@
 from couchish.schemaish_jsonbuilder import build as schema_build, schemaish_type_registry, strip_stars, split_prefix
-import formish, schemaish
+import formish
 from formish import filestore
 from validatish import validator
 

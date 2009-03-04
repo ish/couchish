@@ -1,11 +1,9 @@
 from __future__ import with_statement
 import unittest
 import os.path
-import uuid
 import couchdb
 from couchish import config, errors, store
 from couchish.tests import util
-from copy import copy
 
 def data_filename(filename, namespace=None):
     if namespace:

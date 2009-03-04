@@ -2,8 +2,7 @@ import schemaish, formish
 from jsonish import pythonjson as json
 from couchish.formish_jsonbuilder import build as formish_build
 from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
-from couchish.formish_jsonbuilder import FormishWidgetRegistry, expand_definition
-from couchish.schemaish_jsonbuilder import strip_stars
+from couchish.formish_jsonbuilder import FormishWidgetRegistry
 from formish import widgets, filestore
 
 
