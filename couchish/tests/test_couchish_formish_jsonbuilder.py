@@ -1,27 +1,12 @@
 import unittest
 from couchish.couchish_formish_jsonbuilder import build
 import yaml
-from dottedish import dotted
 import webob
 from BeautifulSoup import BeautifulSoup
 import urllib
 
 
 DATADIR = 'couchish/tests/data/%s'
-
-def build_request(formname, data):
-    d = dotted(data)
-    e = {'REQUEST_METHOD': 'POST'}
-    request = webob.Request.blank('/',environ=e)
-    fields = []
-    fields.append( ('_charset)','UTF-8') )
-    fields.append( ('__formish_form__','form') )
-    for k, v in d.dotteditems():
-        fields.append( (k,v) )
-    fields.append( ('submit','Submit') )
-    request.body = urlencode( fields )
-
-    return request
 
 class Test(unittest.TestCase):
 

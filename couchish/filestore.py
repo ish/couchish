@@ -1,5 +1,4 @@
 from __future__ import with_statement
-import couchish
 from cStringIO import StringIO
 
 class CouchDBFilestore(object):

@@ -6,13 +6,7 @@ Views we can build:
 """
 
 from couchdb.design import ViewDefinition
-
 from couchdbsession import a8n, session
-
-from dottedish import dotted
-from copy import copy
-import base64
-import uuid
 import schemaish.type
 
 from couchish import filehandling, errors, jsonutil

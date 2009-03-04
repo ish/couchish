@@ -7,7 +7,6 @@ Views we can build:
 
 
 from dottedish import dotted
-from copy import copy
 import base64
 import uuid
 from schemaish.type import File
