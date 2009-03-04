@@ -13,6 +13,8 @@ from dottedish import dotted
 from copy import copy
 import base64
 import uuid
+import schemaish.type
+
 from couchish import filehandling, errors, jsonutil
 
 
@@ -231,7 +233,7 @@ class CouchishStoreSession(object):
 
 class Tracker(a8n.Tracker):
     def _track(self, obj, path):
-        if isinstance(obj, jsonutil.CouchishFile):
+        if isinstance(obj, (jsonutil.CouchishFile, schemaish.type.File)):
             return obj
         return super(Tracker, self)._track(obj, path)
 
