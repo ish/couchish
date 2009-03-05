@@ -1,7 +1,10 @@
 from __future__ import with_statement
 from cStringIO import StringIO
 
-class CouchDBFilestore(object):
+import couchish
+
+
+class CouchDBAttachmentSource(object):
     """
     A file source for the FileResource to use to read attachments from
     documents in a CouchDB database.
@@ -26,7 +29,7 @@ class CouchDBFilestore(object):
         try:
             with self.couchish.session() as S:
                 doc = S.doc_by_id(doc_id)
-        except couchdb.client.ResourceNotFound:
+        except couchish.NotFound:
             raise KeyError(key)
         # Check the attachment stub exists.
         attachment_stub = doc.get('_attachments', {}).get(attachment_name)
