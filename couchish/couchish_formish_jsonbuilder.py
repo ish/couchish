@@ -11,6 +11,7 @@ class Reference(schemaish.attr.Attribute):
     """
     def __init__(self, **k):
         self.refersto = k['attr']['refersto']
+        self.uses = k['attr']['uses']
         schemaish.attr.Attribute.__init__(self,**k)
         
 
@@ -83,7 +84,11 @@ class SelectChoiceCouchDB(widgets.Widget):
         if string_data == '':
             return self.empty
         result = self.results[string_data]
-        return {'_ref':string_data, 'data':result}
+        if isinstance(result, dict):
+            result['_ref'] = string_data
+            return result
+        else:
+            return {'_ref':string_data, 'data':result}
 
     def get_none_option_value(self, schema_type):
         """
@@ -126,17 +131,13 @@ class WidgetRegistry(FormishWidgetRegistry):
 
 
     def selectchoice_couchdb_factory(self, spec, k):
-        print 'SPEC',spec
         if spec is None:
             spec = {}
         widget_spec = spec.get('widget')
         if widget_spec is None:
             widget_spec = {}
-        options = widget_spec.get('options')
-        if options is None:
-            options = {}
-        label_template = options.get('label', '%s')
-        view = options.get('view', spec.get('attr',{}).get('refersto'))
+        label_template = widget_spec.get('label', '%s')
+        view = widget_spec.get('view', spec.get('attr',{}).get('refersto'))
         return SelectChoiceCouchDB(self.db, view, label_template, **k)
 
     def checkboxmultichoicetree_couchdb_factory(self, spec, k):
