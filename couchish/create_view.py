@@ -31,7 +31,11 @@ def getjs(uses):
         replacement = 'doc.%s'%attr
         js = js.replace(target, replacement)
         target = '\"%s|%s\"'%(model_type,attr)
+        if '.' in target:
+            target = '%s"'%target.split('.')[0]
         replacement = attr
+        if '.' in replacement:
+            replacement = replacement.split('.')[0]
         js = js.replace(target, replacement)
         target = '\"#%s#\"'%use
     return js
