@@ -105,7 +105,6 @@ class CouchishStoreSession(object):
         if len(rows) == 0:
             raise errors.NotFound("No document in view %r with key %r" % (view, key))
         elif len(rows) == 2:
-            print "***** HIT WEIRD TOO MANY?? rows=", [vars(row) for row in rows], ", id=", id
             raise errors.TooMany("Too many documents in view %r for key %r" % (view, key))
         return rows[0].doc
 
@@ -141,7 +140,9 @@ class CouchishStoreSession(object):
         return self.session.view(view, **options)
 
     def _pre_flush_hook(self, session, deletions, additions, changes):
-        self.file_deletions, self.file_additions = filehandling._parse_changes_for_files(session, deletions, additions, changes)
+        file_deletions, file_additions = filehandling._parse_changes_for_files(session, deletions, additions, changes)
+        self.file_deletions.update(file_deletions)
+        self.file_additions.update(file_additions)
 
     def flush(self):
         """
@@ -189,7 +190,10 @@ class CouchishStoreSession(object):
                     # have it.
                     if ref_data is NO_REF_DATA:
                         ref_data = self.view(view_url, startkey=ref_key, limit=1).rows[0].value
-                        ref_data['_ref'] = ref_key
+                        if isinstance(ref_data, dict):
+                            ref_data['_ref'] = ref_key
+                        else:
+                            ref_data = {'_ref': ref_key, 'data': ref_data}
                     for attr in attrs_by_type[ref_doc['model_type']]:
                         # Any of the attrs sections could be a sequence.. we need to iterate over them all to find matches.. 
                         # e.g. we may have authors*. or metadata*.authors*
