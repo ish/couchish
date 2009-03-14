@@ -147,12 +147,14 @@ def get_views(models_definition, views_definition):
                 fieldname = field['name']
             
             # If we have any references, build the appropriate lookups
-            if 'refersto' in field:
-                refersto = field['refersto']
+            if 'attr' in field and 'refersto' in field['attr']:
+                refersto = field['attr']['refersto']
                 view = views_by_viewname[refersto]
-                uses = view['uses']
+                if 'uses' in field:
+                    uses = field['uses']
+                else:
+                    uses = view['uses']
                 # Build the reference views dynamically if not explicit
-
 
                 if isinstance(uses, basestring):
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
