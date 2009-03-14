@@ -15,7 +15,7 @@ class CouchishFile(File):
         self.b64 = b64
 
     def __repr__(self):
-        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s" >' % (getattr(self,'file'), self.filename, self.mimetype, self.id, getattr(self, 'doc_id'), getattr(self,'inline'), getattr(self,'b64'))
+        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s" >' % (getattr(self,'file',None), self.filename, self.mimetype, self.id, getattr(self, 'doc_id',None), getattr(self,'inline',None), getattr(self,'b64', None))
 
 
 def file_to_dict(obj):
