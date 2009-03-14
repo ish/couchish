@@ -85,9 +85,10 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
             f.id = uuid.uuid4().hex
         if getattr(f,'inline',False) is True:
             filestore = inlinefiles
-            del f.inline
         else:
             filestore = files
+        if hasattr(f, 'inline'):
+            del f.inline
         #  add the files for attachment handling and remove the file data from document
         if getattr(f,'b64', None):
             filestore[fullprefix] = jsonutil.CouchishFile(f.file, f.filename, f.mimetype, f.id, b64=True)
@@ -152,6 +153,7 @@ def _parse_changes_for_files(session, deletions, additions, changes):
                 all_original_files.setdefault(d['_id'], {}).update(original_files)
                 _extract_inline_attachments(d, inlinefiles)
         changes[n] = (d, cs)
+
 
     return all_original_files, all_separate_files
 
