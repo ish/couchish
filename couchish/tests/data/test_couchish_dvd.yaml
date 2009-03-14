@@ -3,8 +3,9 @@ fields:
 - name: title
 
 - name: writtenby
-  type: Reference()
-  refersto: customdesigndoc/author_surname
+  type: Reference
+  attr:
+    refersto: customdesigndoc/author_surname
 
 
 

@@ -2,9 +2,12 @@ fields:
 - name: title
 
 - name: authors
-  type: Sequence(Structure())
+  type: Sequence
+  attr:
+    type: Structure
 
 - name: authors.*.nested
-  type: Reference()
-  refersto: couchish/author_name
+  type: Reference
+  attr:
+    refersto: couchish/author_name
 

@@ -2,8 +2,9 @@ fields:
 - name: subject
 
 - name: author
-  type: Reference()
-  refersto: couchish/author_name
+  type: Reference
+  attr:
+    refersto: couchish/author_name
 
 views:
   - type: all

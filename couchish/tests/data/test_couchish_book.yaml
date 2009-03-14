@@ -2,10 +2,12 @@ fields:
 - name: title
 
 - name: writtenby
-  type: Reference()
-  refersto: customdes/author_name
+  type: Reference
+  attr:
+    refersto: customdes/author_name
 
 - name: coauthored
-  type: Reference()
-  refersto:  customdesigndoc/author_surname
+  type: Reference
+  attr: 
+    refersto:  customdesigndoc/author_surname
 

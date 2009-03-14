@@ -2,14 +2,16 @@ fields:
 - name: title
 
 - name: metadata
-  type: Structure()
+  type: Structure
 
 - name: metadata.writtenby
-  type: Reference()
-  refersto: couchish/author_name
+  type: Reference
+  attr:
+    refersto: couchish/author_name
 
 - name: metadata.coauthored
-  type: Reference()
-  refersto: couchish/author_surname
+  type: Reference
+  attr:
+    refersto: couchish/author_surname
 
 
