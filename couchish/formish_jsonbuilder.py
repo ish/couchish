@@ -219,6 +219,8 @@ def expand_definition(pre_expand_definition):
         field['title'] = item.get('title')
         field['description'] = item.get('description')
         field['type'] = item.get('type','String')
+        if 'default' in item:
+            field['default'] = item['default']
         field['attr'] = item.get('attr')
         if item.get('required') is True:
             field['validator'] = validator.Required()
@@ -237,6 +239,9 @@ def build(definition, name=None, defaults=None, errors=None, action='', widget_r
     for item in definition:
         w = widget_registry.make_formish_widget(item)
         if w is not None:
-            form[item['starkey']].widget = w
+            form[item['name']].widget = w
+        if 'default' in item:
+            form[item['name']].default = item['default']
+
 
     return form

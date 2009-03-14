@@ -174,7 +174,11 @@ class SchemaishTypeRegistry(object):
         return schemaish.Sequence(attr_type, **field)
     
     def tuple_factory(self, field):
-        return schemaish.Tuple(**field)
+        attr = field.pop('attr')
+        attr_types = []
+        for a in attr['types']:
+            attr_types.append(self.make_schemaish_type(a))
+        return schemaish.Tuple(attr_types, **field)
 
     def structure_factory(self, field):
         return schemaish.Structure(**field)

@@ -85,17 +85,19 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
             f.id = uuid.uuid4().hex
         if getattr(f,'inline',False) is True:
             filestore = inlinefiles
+            del f.inline
         else:
             filestore = files
         #  add the files for attachment handling and remove the file data from document
         if getattr(f,'b64', None):
             filestore[fullprefix] = jsonutil.CouchishFile(f.file, f.filename, f.mimetype, f.id, b64=True)
+            del f.b64
         else:
             fh = StringIO()
             shutil.copyfileobj(f.file, fh)
             fh.seek(0)
             filestore[fullprefix] = jsonutil.CouchishFile(fh, f.filename, f.mimetype, f.id)
-        f.file = None
+        del f.file
 
 
 
@@ -164,6 +166,10 @@ def _extract_inline_attachments(doc, files):
         else:
             data = base64.encodestring(f.file.read()).replace('\n','')
             f.file.close()
+        del f.file
+        del f.b64
+        del f.inline
+        del f.doc_id
         doc.setdefault('_attachments',{})[f.id] = {'content_type': f.mimetype,'data': data}
 
 
@@ -185,6 +191,10 @@ def _handle_separate_attachments(session, deletions, additions):
                     data = f.file.read()
                     f.file.close()
             session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, data, filename=f.id, content_type=f.mimetype)
+            del f.file
+            del f.b64
+            del f.inline
+            del f.doc_id
 
     for id, attrfiles in deletions.items():
         # XXX had to use _db because delete attachment freeaked using session version. 

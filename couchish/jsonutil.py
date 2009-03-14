@@ -15,22 +15,24 @@ class CouchishFile(File):
         self.b64 = b64
 
     def __repr__(self):
-        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s" >' % (self.file, self.filename, self.mimetype, self.id, getattr(self, 'doc_id'), self.inline, self.b64)
+        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s" >' % (getattr(self,'file'), self.filename, self.mimetype, self.id, getattr(self, 'doc_id'), getattr(self,'inline'), getattr(self,'b64'))
 
 
 def file_to_dict(obj):
-    d = {'__type__': 'file',
-         'filename': obj.filename,
-         'mimetype': obj.mimetype,
-         'id': getattr(obj, 'id', None),
-         'doc_id': getattr(obj, 'doc_id', None),
-         'inline': getattr(obj, 'inline', False)}
+    d = {
+        '__type__': 'file',
+        'filename': obj.filename,
+        'mimetype': obj.mimetype,
+        'id': getattr(obj, 'id', None),
+        }
+    if hasattr(obj,'doc_id') and obj.doc_id is not None:
+        d['doc_id'] = obj.doc_id
+    if hasattr(obj, 'inline') and obj.inline is not False:
+        d['inline'] = obj.inline
     if hasattr(obj,'b64'):
         d['base64'] = obj.file
     else:
-        if obj.file is None:
-            d['file'] = None
-        else:
+        if hasattr(obj,'file') and obj.file is not None:
             d['base64'] = base64.encodestring(obj.file.read())
     return d
 
