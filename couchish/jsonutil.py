@@ -29,7 +29,7 @@ def file_to_dict(obj):
         d['doc_id'] = obj.doc_id
     if hasattr(obj, 'inline') and obj.inline is not False:
         d['inline'] = obj.inline
-    if hasattr(obj,'b64'):
+    if hasattr(obj,'file') and hasattr(obj,'b64'):
         d['base64'] = obj.file
     else:
         if hasattr(obj,'file') and obj.file is not None:
