@@ -150,6 +150,8 @@ class CouchishStoreSession(object):
         """
         returnvalue =  self.session.flush()
         filehandling._handle_separate_attachments(self.session, self.file_deletions, self.file_additions)
+        self.file_additions = {}
+        self.file_deletions = {}
         return returnvalue
 
     def reset(self):
