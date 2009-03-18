@@ -1,9 +1,26 @@
-import schemaish, formish
+import schemaish, formish, subprocess, uuid, os
 from jsonish import pythonjson as json
 from couchish.formish_jsonbuilder import build as formish_build
 from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
 from couchish.formish_jsonbuilder import FormishWidgetRegistry
-from formish import widgets, filestore
+from formish import widgets, filestore, safefilename
+from PIL import Image
+from schemaish.type import File as SchemaFile
+
+def get_size(filename):
+    IDENTIFY = '/usr/bin/identify'
+    stdout = subprocess.Popen([IDENTIFY, filename], stdout=subprocess.PIPE).communicate()[0]
+    print '#################',stdout
+    if 'JPEG' in stdout:
+        type = 'JPEG'
+    if 'PNG' in stdout:
+        type = 'PNG'
+    if 'GIF' in stdout:
+        type = 'GIF'
+    dims = stdout.split(type)[1].split(' ')[1]
+    width, height = [int(s) for s in dims.split('x')]
+    return width, height
+
 
 
 class Reference(schemaish.attr.Attribute):
@@ -28,6 +45,61 @@ class TypeRegistry(SchemaishTypeRegistry):
 
 
 UNSET = object()
+
+class FileUpload(formish.FileUpload):
+
+    def __init__(self, filestore, show_file_preview=True, show_download_link=False, show_image_thumbnail=False, url_base=None, \
+                 css_class=None, image_thumbnail_default=None, url_ident_factory=None, identify_size=False):
+        formish.FileUpload.__init__(self, filestore, show_file_preview=show_file_preview, show_download_link=show_download_link, \
+            show_image_thumbnail=show_image_thumbnail, url_base=url_base, css_class=css_class, image_thumbnail_default=image_thumbnail_default, url_ident_factory=url_ident_factory)
+        self.identify_size = identify_size
+
+    def pre_parse_request(self, schema_type, data, full_request_data):
+        """
+        File uploads are wierd; in out case this means assymetric. We store the
+        file in a temporary location and just store an identifier in the field.
+        This at least makes the file look symmetric.
+        """
+        if data.get('remove', [None])[0] is not None:
+            data['name'] = ['']
+            data['mimetype'] = ['']
+            return data
+
+        fieldstorage = data.get('file', [''])[0]
+        if getattr(fieldstorage,'file',None):
+            filename = '%s-%s'%(uuid.uuid4().hex,fieldstorage.filename)
+            self.filestore.put(filename, fieldstorage.file, fieldstorage.type, uuid.uuid4().hex)
+            data['name'] = [filename]
+            data['mimetype'] = [fieldstorage.type]
+        if self.identify_size is True:
+            fieldstorage.file.seek(0)
+            width, height = Image.open(fieldstorage.file).size
+            print 'WH',width,height
+            data['width'] = [width]
+            data['height'] = [height]
+        return data
+
+    def convert(self, schema_type, request_data):
+        """
+        Creates a File object if possible
+        """
+        # XXX We could add a file converter that converts this to a string data?
+
+        if request_data['name'] == ['']:
+            return None
+        elif request_data['name'] == request_data['default']:
+            return ImageFile(None, None, None)
+        else:
+            filename = request_data['name'][0]
+            try:
+                content_type, cache_tag, f = self.filestore.get(filename)
+            except KeyError:
+                return None
+            if self.identify_size == True:
+                metadata = {'width':request_data['width'][0], 'height': request_data['height'][0]}
+            else:
+                metadata = None
+            return SchemaFile(f, filename, content_type, metadata=metadata)
 
 class SelectChoiceCouchDB(widgets.Widget):
 
@@ -164,13 +236,15 @@ class WidgetRegistry(FormishWidgetRegistry):
         show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
         show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
         show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
-        return formish.FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
+        identify_size = widget_spec.get('options',{}).get('identify_size',False)
+        return FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
              url_base=url_base,
              image_thumbnail_default=image_thumbnail_default,
              show_download_link=show_download_link,
              show_file_preview=show_file_preview,
              show_image_thumbnail=show_image_thumbnail,
              url_ident_factory=url_ident_factory,
+             identify_size=identify_size,
              **k )
 
 

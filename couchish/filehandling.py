@@ -78,6 +78,8 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
             f.mimetype = of.mimetype
         if f.filename is None:
             f.filename = of.filename
+        if f.metadata is None:
+            f.metadata = getattr(of, 'metadata', None)
     else:
         if of and hasattr(of,'id'):
             f.id = of.id
@@ -91,13 +93,13 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
             del f.inline
         #  add the files for attachment handling and remove the file data from document
         if getattr(f,'b64', None):
-            filestore[fullprefix] = jsonutil.CouchishFile(f.file, f.filename, f.mimetype, f.id, b64=True)
+            filestore[fullprefix] = jsonutil.CouchishFile(f.file, f.filename, f.mimetype, f.id, metadata = f.metadata, b64=True)
             del f.b64
         else:
             fh = StringIO()
             shutil.copyfileobj(f.file, fh)
             fh.seek(0)
-            filestore[fullprefix] = jsonutil.CouchishFile(fh, f.filename, f.mimetype, f.id)
+            filestore[fullprefix] = jsonutil.CouchishFile(fh, f.filename, f.mimetype, f.id, metadata = f.metadata)
         del f.file
 
 

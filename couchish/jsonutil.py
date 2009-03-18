@@ -5,7 +5,7 @@ from dottedish import dotted
 
 class CouchishFile(File):
 
-    def __init__(self, file, filename, mimetype, id=None, doc_id=None, inline=False, b64=False):
+    def __init__(self, file, filename, mimetype, id=None, doc_id=None, inline=False, b64=False, metadata=None):
         self.file = file
         self.filename = filename
         self.mimetype = mimetype
@@ -13,9 +13,12 @@ class CouchishFile(File):
         self.doc_id = doc_id
         self.inline = inline
         self.b64 = b64
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
 
     def __repr__(self):
-        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s" >' % (getattr(self,'file',None), self.filename, self.mimetype, self.id, getattr(self, 'doc_id',None), getattr(self,'inline',None), getattr(self,'b64', None))
+        return '<couchish.jsonutil.CouchishFile file="%r" filename="%s", mimetype="%s", id="%s", doc_id="%s", inline="%s", b64="%s", metadata="%r" >' % (getattr(self,'file',None), self.filename, self.mimetype, self.id, getattr(self, 'doc_id',None), getattr(self,'inline',None), getattr(self,'b64', None), getattr(self, 'metadata', {}))
 
 
 def file_to_dict(obj):
@@ -25,6 +28,8 @@ def file_to_dict(obj):
         'mimetype': obj.mimetype,
         'id': getattr(obj, 'id', None),
         }
+    if hasattr(obj, 'metadata') and obj.metadata:
+        d['metadata'] = obj.metadata
     if hasattr(obj,'doc_id') and obj.doc_id is not None:
         d['doc_id'] = obj.doc_id
     if hasattr(obj, 'inline') and obj.inline is not False:
@@ -43,14 +48,15 @@ def file_from_dict(obj):
     inline = obj.get('inline', False)
     id = obj.get('id')
     doc_id = obj.get('doc_id')
+    metadata = obj.get('metadata',{})
     if 'base64' in obj:
         data = obj['base64']
-        return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline, b64=True)
+        return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline, b64=True, metadata=metadata)
     elif 'file' in obj:
         data = obj['file']
-        return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline)
+        return CouchishFile(data, filename, mimetype, id=id, doc_id=doc_id, inline=inline, metadata=metadata)
     else:
-        return CouchishFile(None, filename, mimetype, id=id, doc_id=doc_id)
+        return CouchishFile(None, filename, mimetype, id=id, doc_id=doc_id, metadata=metadata)
 
 
 pythonjson.json.register_type(File, file_to_dict, file_from_dict, "file")
