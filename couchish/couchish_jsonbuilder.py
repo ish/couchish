@@ -150,8 +150,8 @@ def get_views(models_definition, views_definition):
             if 'attr' in field and 'refersto' in field['attr']:
                 refersto = field['attr']['refersto']
                 view = views_by_viewname[refersto]
-                if 'uses' in field:
-                    uses = field['uses']
+                if 'uses' in field['attr']:
+                    uses = field['attr']['uses']
                 else:
                     uses = view['uses']
                 # Build the reference views dynamically if not explicit
