@@ -6,11 +6,12 @@ from couchish.formish_jsonbuilder import FormishWidgetRegistry
 from formish import widgets, filestore, safefilename
 from PIL import Image
 from schemaish.type import File as SchemaFile
+from dottedish import get_dict_from_dotted_dict
+from convertish.convert import string_converter
 
 def get_size(filename):
     IDENTIFY = '/usr/bin/identify'
     stdout = subprocess.Popen([IDENTIFY, filename], stdout=subprocess.PIPE).communicate()[0]
-    print '#################',stdout
     if 'JPEG' in stdout:
         type = 'JPEG'
     if 'PNG' in stdout:
@@ -28,7 +29,7 @@ class Reference(schemaish.attr.Attribute):
     """
     def __init__(self, **k):
         self.refersto = k['attr']['refersto']
-        self.uses = k['attr']['uses']
+        #self.uses = k['attr']['uses']
         schemaish.attr.Attribute.__init__(self,**k)
         
 
@@ -71,10 +72,9 @@ class FileUpload(formish.FileUpload):
             self.filestore.put(filename, fieldstorage.file, fieldstorage.type, uuid.uuid4().hex)
             data['name'] = [filename]
             data['mimetype'] = [fieldstorage.type]
-        if self.identify_size is True:
+        if self.identify_size is True and fieldstorage != '':
             fieldstorage.file.seek(0)
             width, height = Image.open(fieldstorage.file).size
-            print 'WH',width,height
             data['width'] = [width]
             data['height'] = [height]
         return data
@@ -88,7 +88,7 @@ class FileUpload(formish.FileUpload):
         if request_data['name'] == ['']:
             return None
         elif request_data['name'] == request_data['default']:
-            return ImageFile(None, None, None)
+            return SchemaFile(None, None, None)
         else:
             filename = request_data['name'][0]
             try:
@@ -189,7 +189,32 @@ class SelectChoiceCouchDB(widgets.Widget):
                 self.options.append( (value,label) )
         return self.options
 
+class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
 
+    _template='CheckboxMultiChoiceTreeCouchDB'
+
+    def __init__(self, full_options, cssClass=None):
+        self.options = [ (key, value['data']['label']) for key, value in full_options]
+        self.full_options = dict(full_options)
+        self.optiontree = get_dict_from_dotted_dict(dict(self.options),noexcept=True)
+        widgets.Widget.__init__(self,cssClass=cssClass)
+
+    def pre_render(self, schema_type, data):
+        if data is None:
+            return []
+        return [c['path'] for c in data]
+
+    def checked(self, option, values, schema_type):
+        if values is not None and option[0] in values:
+            return ' checked="checked"'
+        else:
+            return ''
+
+    def convert(self, schema_type, data):
+        out = []
+        for item in data:
+            out.append(self.full_options[item])
+        return out
 
 
 class WidgetRegistry(FormishWidgetRegistry):
@@ -199,6 +224,7 @@ class WidgetRegistry(FormishWidgetRegistry):
         FormishWidgetRegistry.__init__(self)
         self.registry['SelectChoiceCouchDB'] = self.selectchoice_couchdb_factory
         self.registry['CheckboxMultiChoiceTreeCouchDB'] = self.checkboxmultichoicetree_couchdb_factory
+        self.registry['CheckboxMultiChoiceTreeCouchDBFacet'] = self.checkboxmultichoicetree_couchdbfacet_factory
         self.defaults['Reference'] = self.selectchoice_couchdb_factory
 
 
@@ -209,7 +235,12 @@ class WidgetRegistry(FormishWidgetRegistry):
         if widget_spec is None:
             widget_spec = {}
         label_template = widget_spec.get('label', '%s')
-        view = widget_spec.get('view', spec.get('attr',{}).get('refersto'))
+        attr = spec.get('attr',{})
+        if attr is None:
+            refersto = None
+        else:
+            refersto = attr.get('refersto')
+        view = widget_spec.get('view', refersto)
         return SelectChoiceCouchDB(self.db, view, label_template, **k)
 
     def checkboxmultichoicetree_couchdb_factory(self, spec, k):
@@ -218,6 +249,18 @@ class WidgetRegistry(FormishWidgetRegistry):
             return [(item.id,item.doc['label']) for item in list(db.view(view, include_docs=True))]
         view = widgetSpec['options']
         return formish.CheckboxMultiChoiceTree(options=options(self.db,view), **k)
+
+    def checkboxmultichoicetree_couchdbfacet_factory(self, spec, k):
+        widgetSpec = spec.get('widget')
+        def options(db, view):
+            facet = list(db.view(view, include_docs=True))[0].doc
+            options = []
+            for item in facet['category']:
+                options.append( (item['path'],item) )
+            return options
+        view = 'facet_%s/all'%widgetSpec['facet']
+
+        return CheckboxMultiChoiceTreeCouchDB(full_options=options(self.db,view), **k)
 
     def fileupload_factory(self, spec, k):
         widget_spec = spec.get('widget')
