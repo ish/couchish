@@ -78,7 +78,7 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
             f.mimetype = of.mimetype
         if f.filename is None:
             f.filename = of.filename
-        if f.metadata is None:
+        if not hasattr(f, 'metadata') or f.metadata is None:
             f.metadata = getattr(of, 'metadata', None)
     else:
         if of and hasattr(of,'id'):
