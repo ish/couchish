@@ -278,7 +278,8 @@ class SeqRefTextArea(formish.Input):
         docs = self.db.view(self.view, keys=ids)
         out = []
         for d in docs:
-            out.append( {'_ref': d.key, 'data': d.value} )
+            d.value.update({'_ref': d.key})
+            out.append(d.value)
         return out
 
     def __repr__(self):
