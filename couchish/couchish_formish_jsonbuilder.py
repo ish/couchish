@@ -189,6 +189,24 @@ class SelectChoiceCouchDB(widgets.Widget):
                 self.options.append( (value,label) )
         return self.options
 
+
+
+def get_parent(segments):
+    if len(segments) == 1:
+        return ''
+    else:
+        return '.'.join(segments[:-1])
+
+def mktree(options):
+    last_segments_len = 1
+    root = {'': {'data':('root', 'Root'), 'children':[]} }
+    for id, label in options:
+        segments = id.split('.')
+        parent = get_parent(segments)
+        root[id] = {'data': (id, label), 'children':[]}
+        root[parent]['children'].append(root[id])
+    return root['']
+
 class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
 
     _template='CheckboxMultiChoiceTreeCouchDB'
@@ -196,7 +214,7 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
     def __init__(self, full_options, cssClass=None):
         self.options = [ (key, value['data']['label']) for key, value in full_options]
         self.full_options = dict(full_options)
-        self.optiontree = get_dict_from_dotted_dict(dict(self.options),noexcept=True)
+        self.optiontree = mktree(self.options)
         widgets.Widget.__init__(self,cssClass=cssClass)
 
     def pre_render(self, schema_type, data):
@@ -216,12 +234,73 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
             out.append(self.full_options[item])
         return out
 
+class SeqRefTextArea(formish.Input):
+    """
+    Textarea input field
+
+    :arg cols: set the cols attr on the textarea element
+    :arg rows: set the cols attr on the textarea element
+    """
+
+    _template = 'SeqRefTextArea'
+
+    def __init__(self, db, view, **k):
+        self.cols = k.pop('cols', None)
+        self.rows = k.pop('rows', None)
+        self.strip = k.pop('strip', True)
+        self.db = db
+        self.view = view
+        formish.Input.__init__(self, **k)
+        if not self.converter_options.has_key('delimiter'):
+            self.converter_options['delimiter'] = '\n'
+
+    def pre_render(self, schema_type, data):
+        """
+        We're using the converter options to allow processing sequence data
+        using the csv module
+        """
+        if data is None:
+            return []
+        string_data = [d['_ref'] for d in data]
+        return [string_data]
+
+    def convert(self, schema_type, request_data):
+        """
+        We're using the converter options to allow processing sequence data
+        using the csv module
+        """
+        string_data = request_data[0]
+        if self.strip is True:
+            string_data = string_data.strip()
+        if string_data == '':
+            return self.empty
+        ids = [s.strip() for s in string_data.splitlines()]
+        docs = self.db.view(self.view, keys=ids)
+        out = []
+        for d in docs:
+            out.append( {'_ref': d.key, 'data': d.value} )
+        return out
+
+    def __repr__(self):
+        attributes = []
+        if self.strip is False:
+            attributes.append('strip=%r'%self.strip)
+        if self.converter_options != {'delimiter':','}:
+            attributes.append('converter_options=%r'%self.converter_options)
+        if self.css_class:
+            attributes.append('css_class=%r'%self.css_class)
+        if self.empty is not None:
+            attributes.append('empty=%r'%self.empty)
+
+        return 'couchish_formish_jsonbuilder.%s(%s)'%(self.__class__.__name__, ', '.join(attributes))
+
 
 class WidgetRegistry(FormishWidgetRegistry):
 
     def __init__(self, db=None):
         self.db = db
         FormishWidgetRegistry.__init__(self)
+        self.registry['SeqRefTextArea'] = self.seqreftextarea_factory
         self.registry['SelectChoiceCouchDB'] = self.selectchoice_couchdb_factory
         self.registry['CheckboxMultiChoiceTreeCouchDB'] = self.checkboxmultichoicetree_couchdb_factory
         self.registry['CheckboxMultiChoiceTreeCouchDBFacet'] = self.checkboxmultichoicetree_couchdbfacet_factory
@@ -249,6 +328,20 @@ class WidgetRegistry(FormishWidgetRegistry):
             return [(item.id,item.doc['label']) for item in list(db.view(view, include_docs=True))]
         view = widgetSpec['options']
         return formish.CheckboxMultiChoiceTree(options=options(self.db,view), **k)
+
+    def seqreftextarea_factory(self, spec, k):
+        if spec is None:
+            spec = {}
+        widget_spec = spec.get('widget')
+        if widget_spec is None:
+            widget_spec = {}
+        attr = spec.get('attr',{}).get('attr',{})
+        if attr is None:
+            refersto = None
+        else:
+            refersto = attr.get('refersto')
+        view = widget_spec.get('view', refersto)
+        return SeqRefTextArea(self.db, view, **k)
 
     def checkboxmultichoicetree_couchdbfacet_factory(self, spec, k):
         widgetSpec = spec.get('widget')
@@ -289,6 +382,9 @@ class WidgetRegistry(FormishWidgetRegistry):
              url_ident_factory=url_ident_factory,
              identify_size=identify_size,
              **k )
+
+
+
 
 
 def build(definition, db=None, name=None, defaults=None, errors=None, action='', widget_registry=None, type_registry=None, add_id_and_rev=False):
