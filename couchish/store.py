@@ -98,14 +98,23 @@ class CouchishStoreSession(object):
             raise errors.NotFound("No document with id %r" % (id,))
         return doc
 
-    def doc_by_view(self, view, key):
-        results = self.session.view(view, startkey=key, endkey=key, limit=2,
+    def doc_by_view(self, view, key=None):
+        if key is not None:
+            results = self.session.view(view, startkey=key, endkey=key, limit=2,
                                     include_docs=True)
+        else:
+            results = self.session.view(view, limit=2, include_docs=True)
         rows = results.rows
         if len(rows) == 0:
-            raise errors.NotFound("No document in view %r with key %r" % (view, key))
+            message = "No document in view %r"%view
+            if key is not None:
+                message += " with key %r"%key
+            raise errors.NotFound(message)
         elif len(rows) == 2:
-            raise errors.TooMany("Too many documents in view %r for key %r" % (view, key))
+            message = "Too many documents in view %r"%view
+            if key is not None:
+                message += " with key %r"%key
+            raise errors.TooMany(message)
         return rows[0].doc
 
     def docs_by_id(self, ids, **options):
