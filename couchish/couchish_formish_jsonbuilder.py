@@ -113,6 +113,7 @@ class SelectChoiceCouchDB(widgets.Widget):
         :arg css_class: a css class to apply to the field
         """
         none_option = k.pop('none_option', UNSET)
+        self.sort = k.pop('sort', UNSET)
         if none_option is not UNSET:
             self.none_option = none_option
         widgets.Widget.__init__(self, **k)
@@ -180,6 +181,8 @@ class SelectChoiceCouchDB(widgets.Widget):
         results = [json.decode_from_dict(item) for item in self.db.view(self.view)]
         self.results = dict((result['id'], result['value']) for result in results)
         _options = [ (result['id'], self.label_template%result['value']) for result in results]
+        if self.sort == True:
+            _options.sort(lambda x, y: cmp(x[1], y[1]))
 
         self.options = []
         for (value, label) in _options:
@@ -315,6 +318,7 @@ class WidgetRegistry(FormishWidgetRegistry):
         if widget_spec is None:
             widget_spec = {}
         label_template = widget_spec.get('label', '%s')
+        k['sort'] = widget_spec.get('sort')
         attr = spec.get('attr',{})
         if attr is None:
             refersto = None
