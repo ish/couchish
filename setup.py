@@ -20,6 +20,7 @@ setup(name='couchish',
       install_requires=[
           # -*- Extra requirements: -*-
           "PyYAML",
+          "couchdb-session",
       ],
       entry_points="""
       # -*- Entry points: -*-
