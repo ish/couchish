@@ -265,7 +265,7 @@ class SeqRefTextArea(formish.Input):
         if data is None:
             return []
         string_data = [d['_ref'] for d in data]
-        return [string_data]
+        return string_data
 
     def convert(self, schema_type, request_data):
         """
