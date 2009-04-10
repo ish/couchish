@@ -78,7 +78,7 @@ def get_file_from_item(f, of, files, inlinefiles, original_files, fullprefix):
             f.mimetype = of.mimetype
         if f.filename is None:
             f.filename = of.filename
-        if not hasattr(f, 'metadata') or f.metadata is None:
+        if not hasattr(f, 'metadata') or f.metadata is None or f.metadata=={}:
             f.metadata = getattr(of, 'metadata', None)
     else:
         if of and hasattr(of,'id'):
@@ -186,6 +186,7 @@ def _handle_separate_attachments(session, deletions, additions):
 
     for id, attrfiles in additions.items():
         doc = session.get(id)
+        stubdoc = {'_id':doc['_id'], '_rev':doc['_rev']}
         for attr, f in attrfiles.items():
             data = ''
             if f.file:
@@ -194,7 +195,7 @@ def _handle_separate_attachments(session, deletions, additions):
                 else:
                     data = f.file.read()
                     f.file.close()
-            session._db.put_attachment({'_id':doc['_id'], '_rev':doc['_rev']}, data, filename=f.id, content_type=f.mimetype)
+            session._db.put_attachment(stubdoc, data, filename=f.id, content_type=f.mimetype)
             del f.file
             del f.b64
             del f.inline

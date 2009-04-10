@@ -87,7 +87,6 @@ def add_id_and_attr_to_files(data):
             if '_id' in dd and '_rev' in dd:
                 dd[k].doc_id = dd['_id']
                 dd[k].rev = dd['_rev']
-                return dd.data
             segments = k.split('.')
             for n in xrange(1,len(segments)):
                 subpath = '.'.join(segments[:-n])

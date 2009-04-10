@@ -27,6 +27,8 @@ def get_size(filename):
 class Reference(schemaish.attr.Attribute):
     """ a generic reference
     """
+    type = "Reference"
+
     def __init__(self, **k):
         self.refersto = k['attr']['refersto']
         #self.uses = k['attr']['uses']
@@ -48,6 +50,8 @@ class TypeRegistry(SchemaishTypeRegistry):
 UNSET = object()
 
 class FileUpload(formish.FileUpload):
+
+    type="FileUpload"
 
     def __init__(self, filestore, show_file_preview=True, show_download_link=False, show_image_thumbnail=False, url_base=None, \
                  css_class=None, image_thumbnail_default=None, url_ident_factory=None, identify_size=False):
@@ -105,6 +109,8 @@ class SelectChoiceCouchDB(widgets.Widget):
 
     none_option = (None, '- choose -')
     _template='SelectChoice'
+
+    type="SelectChoice"
 
     def __init__(self, db, view, label_template, **k):
         """
@@ -213,6 +219,7 @@ def mktree(options):
 class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
 
     _template='CheckboxMultiChoiceTreeCouchDB'
+    type = "CheckboxMultiChoiceTree"
 
     def __init__(self, full_options, cssClass=None):
         self.options = [ (key, value['data']['label']) for key, value in full_options]
@@ -246,6 +253,7 @@ class SeqRefTextArea(formish.Input):
     """
 
     _template = 'SeqRefTextArea'
+    type="SeqRefTextArea"
 
     def __init__(self, db, view, **k):
         self.cols = k.pop('cols', None)
