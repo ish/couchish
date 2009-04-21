@@ -1,4 +1,3 @@
-from sets import Set
 from couchish.create_view import getjs
 from couchish.schemaish_jsonbuilder import strip_stars
 
@@ -158,13 +157,13 @@ def get_views(models_definition, views_definition):
 
                 if isinstance(uses, basestring):
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
-                    viewnames_by_attribute.setdefault(uses, Set()).add(refersto)
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,Set()).add( fieldname.replace('.*','*') )
+                    viewnames_by_attribute.setdefault(uses, set()).add(refersto)
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,set()).add( fieldname.replace('.*','*') )
                 else:
                     views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,Set()).add( fieldname.replace('.*','*') )
+                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,set()).add( fieldname.replace('.*','*') )
                     for use in uses:
-                        viewnames_by_attribute.setdefault(use, Set()).add(refersto)
+                        viewnames_by_attribute.setdefault(use, set()).add(refersto)
 
             # Create any 'viewby' views
             if 'viewby' in field:

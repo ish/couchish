@@ -1,7 +1,6 @@
 import unittest
 from couchish.couchish_jsonbuilder import get_views
 import yaml
-from sets import Set
 from couchish import sync_categories
 import couchdb
 from couchdb.design import ViewDefinition
@@ -34,11 +33,11 @@ class Test(unittest.TestCase):
 
         models_definition = {'book': book_definition, 'author': author_definition,'post': post_definition, 'dvd': dvd_definition}
         viewdata = get_views(models_definition, views_definition)
-        assert viewdata['viewnames_by_attribute'] == {'author.first_name': Set(['customdes/author_name']), 'author.last_name': Set(['customdesigndoc/author_surname', 'customdes/author_name'])}
-        assert viewdata['attributes_by_viewname'] == {'customdesigndoc/author_surname': {'dvd': Set(['writtenby']), \
-                                                                         'book': Set(['coauthored'])}, \
-                                                      'customdes/author_name': {'post': Set(['author']), \
-                                                                      'book': Set(['writtenby'])}}
+        assert viewdata['viewnames_by_attribute'] == {'author.first_name': set(['customdes/author_name']), 'author.last_name': set(['customdesigndoc/author_surname', 'customdes/author_name'])}
+        assert viewdata['attributes_by_viewname'] == {'customdesigndoc/author_surname': {'dvd': set(['writtenby']), \
+                                                                         'book': set(['coauthored'])}, \
+                                                      'customdes/author_name': {'post': set(['author']), \
+                                                                      'book': set(['writtenby'])}}
         views = viewdata['views']
         assert simplifyjs(views['customdes/author_name'][0]) == "function(doc){if(doc.model_type=='author'){emit(doc._id,{first_name:doc.first_name,last_name:doc.last_name})}}"
         assert simplifyjs(views['customdes/author_name-rev'][0]) == "function(doc){if(doc.model_type=='post'){emit(doc.author._ref,null)}if(doc.model_type=='book'){emit(doc.writtenby._ref,null)}}"
