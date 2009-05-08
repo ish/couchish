@@ -59,7 +59,7 @@ class FileUpload(formish.FileUpload):
             show_image_thumbnail=show_image_thumbnail, url_base=url_base, css_class=css_class, image_thumbnail_default=image_thumbnail_default, url_ident_factory=url_ident_factory)
         self.identify_size = identify_size
 
-    def pre_parse_request(self, schema_type, data, full_request_data):
+    def pre_parse_incoming_request_data(self, schema_type, data, full_request_data):
         """
         File uploads are wierd; in out case this means assymetric. We store the
         file in a temporary location and just store an identifier in the field.
@@ -83,7 +83,7 @@ class FileUpload(formish.FileUpload):
             data['height'] = [height]
         return data
 
-    def convert(self, schema_type, request_data):
+    def from_request_data(self, schema_type, request_data):
         """
         Creates a File object if possible
         """
@@ -108,9 +108,9 @@ class FileUpload(formish.FileUpload):
 class SelectChoiceCouchDB(widgets.Widget):
 
     none_option = (None, '- choose -')
-    _template='SelectChoice'
-
     type="SelectChoice"
+    template='field.SelectChoice'
+
 
     def __init__(self, db, view, label_template, **k):
         """
@@ -141,7 +141,7 @@ class SelectChoiceCouchDB(widgets.Widget):
             return ''
 
 
-    def pre_render(self, schema_type, data):
+    def to_request_data(self, schema_type, data):
         """
         Before the widget is rendered, the data is converted to a string
         format.If the data is None then we return an empty string. The sequence
@@ -153,7 +153,7 @@ class SelectChoiceCouchDB(widgets.Widget):
         return [string_data]
 
 
-    def convert(self, schema_type, request_data):
+    def from_request_data(self, schema_type, request_data):
         """
         after the form has been submitted, the request data is converted into
         to the schema type.
@@ -218,16 +218,16 @@ def mktree(options):
 
 class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
 
-    _template='CheckboxMultiChoiceTreeCouchDB'
+    template='field.CheckboxMultiChoiceTreeCouchDB'
     type = "CheckboxMultiChoiceTree"
 
-    def __init__(self, full_options, cssClass=None):
+    def __init__(self, full_options, css_class=None):
         self.options = [ (key, value['data']['label']) for key, value in full_options]
         self.full_options = dict(full_options)
         self.optiontree = mktree(self.options)
-        widgets.Widget.__init__(self,cssClass=cssClass)
+        widgets.Widget.__init__(self,css_class=css_class)
 
-    def pre_render(self, schema_type, data):
+    def to_request_data(self, schema_type, data):
         if data is None:
             return []
         return [c['path'] for c in data]
@@ -238,7 +238,7 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
         else:
             return ''
 
-    def convert(self, schema_type, data):
+    def from_request_data(self, schema_type, data):
         out = []
         for item in data:
             out.append(self.full_options[item])
@@ -252,7 +252,7 @@ class SeqRefTextArea(formish.Input):
     :arg rows: set the cols attr on the textarea element
     """
 
-    _template = 'SeqRefTextArea'
+    template = 'field.SeqRefTextArea'
     type="SeqRefTextArea"
 
     def __init__(self, db, view, **k):
@@ -265,7 +265,7 @@ class SeqRefTextArea(formish.Input):
         if not self.converter_options.has_key('delimiter'):
             self.converter_options['delimiter'] = '\n'
 
-    def pre_render(self, schema_type, data):
+    def to_request_data(self, schema_type, data):
         """
         We're using the converter options to allow processing sequence data
         using the csv module
@@ -275,7 +275,7 @@ class SeqRefTextArea(formish.Input):
         string_data = [d['_ref'] for d in data]
         return string_data
 
-    def convert(self, schema_type, request_data):
+    def from_request_data(self, schema_type, request_data):
         """
         We're using the converter options to allow processing sequence data
         using the csv module
