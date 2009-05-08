@@ -3,5 +3,6 @@ fields:
 
 - name: author
   type: Reference
-  refersto: customdes/author_name
+  attr:
+      refersto: customdes/author_name
 
