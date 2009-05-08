@@ -118,6 +118,11 @@ def get_view(view, views, views_by_viewname, model_type=None):
     views_by_viewname[view['url']]['map'] = (map,reduce)
     views[view['url']] = (map,reduce)
 
+def get_reference(field):
+    if 'attr' not in field:
+        return field.get('refersto',None), field.get('uses',None)
+    return get_reference(field['attr'])
+
 def get_views(models_definition, views_definition):
 
     views = {} 
@@ -132,8 +137,6 @@ def get_views(models_definition, views_definition):
         for view in definition.get('views',[]):
             get_view(view, views, views_by_viewname, model_type=model_type)
 
-
-
     parents = []
     field_to_view = {}
     for model_type, definition in models_definition.items():
@@ -146,24 +149,24 @@ def get_views(models_definition, views_definition):
                 fieldname = field['name']
             
             # If we have any references, build the appropriate lookups
-            if 'attr' in field and 'refersto' in field['attr']:
-                refersto = field['attr']['refersto']
-                view = views_by_viewname[refersto]
-                if 'uses' in field['attr']:
-                    uses = field['attr']['uses']
-                else:
-                    uses = view['uses']
-                # Build the reference views dynamically if not explicit
+            if 'attr' in field:
+                refersto, uses = get_reference(field['attr'])
 
-                if isinstance(uses, basestring):
-                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
-                    viewnames_by_attribute.setdefault(uses, set()).add(refersto)
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,set()).add( fieldname.replace('.*','*') )
-                else:
-                    views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
-                    attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,set()).add( fieldname.replace('.*','*') )
-                    for use in uses:
-                        viewnames_by_attribute.setdefault(use, set()).add(refersto)
+                if refersto:
+                    view = views_by_viewname[refersto]
+                    if not uses:
+                        uses = view['uses']
+
+                    # Build the reference views dynamically if not explicit
+                    if isinstance(uses, basestring):
+                        views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
+                        viewnames_by_attribute.setdefault(uses, set()).add(refersto)
+                        attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,set()).add( fieldname.replace('.*','*') )
+                    else:
+                        views_by_uses.setdefault(view['url']+'-rev',{}).setdefault(model_type,[]).append( fieldname )
+                        attributes_by_viewname.setdefault(refersto, {}).setdefault(model_type,set()).add( fieldname.replace('.*','*') )
+                        for use in uses:
+                            viewnames_by_attribute.setdefault(use, set()).add(refersto)
 
             # Create any 'viewby' views
             if 'viewby' in field:
