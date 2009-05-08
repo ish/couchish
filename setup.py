@@ -21,8 +21,17 @@ setup(name='couchish',
           # -*- Extra requirements: -*-
           "PyYAML",
           "couchdb-session",
+          "dottedish",
+          "jsonish",
+          "schemaish",
       ],
+      extras_require={
+          'formish': ['formish'],
+      },
       entry_points="""
       # -*- Entry points: -*-
       """,
+      test_suite='couchish.tests',
+      tests_require=['BeautifulSoup', 'WebOb', 'formish'],
       )
+
