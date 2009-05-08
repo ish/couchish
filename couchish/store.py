@@ -121,7 +121,6 @@ class CouchishStoreSession(object):
         """
         Generate the sequence of documents with the given ids.
         """
-        options = dict(options)
         options['keys'] = ids
         options['include_docs'] = True
         results = self.session.view('_all_docs', **options)
@@ -131,13 +130,11 @@ class CouchishStoreSession(object):
         """
         Generate the sequence of docs of a given type.
         """
-        options = dict(options)
         options['include_docs'] = True
         results = self.session.view('%s/all'%type, **options)
         return (row.doc for row in results.rows)
 
     def docs_by_view(self, view, **options):
-        options = dict(options)
         options['include_docs'] = True
         results = self.session.view(view, **options)
         return (row.doc for row in results.rows)
