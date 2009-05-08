@@ -333,4 +333,22 @@ class TestNestedRefsInNestedSequences(unittest.TestCase):
         assert book == {'model_type': 'book', 'title': 'Title', 'people': [{'authors': [ {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}, {'nested': {'_ref': matt_id, 'first_name':'Matt','last_name': 'Woodall'}}]}]}
 
 
+class TestMissingKeys(util.TempDatabaseMixin, unittest.TestCase):
+
+    def setUp(self):
+        super(TestMissingKeys, self).setUp()
+        couchish_store = store.CouchishStore(self.db, config.Config({}, {}))
+        couchish_store.sync_views()
+        self.session = couchish_store.session()
+        for i in range(5):
+            self.session.create({'_id': str(i)})
+        self.session.flush()
+
+    def test_docs_by_id(self):
+        docs = list(self.session.docs_by_id(['3', '4', '5']))
+        assert docs[-1] is None
+
+    def test_docs_by_view(self):
+        docs = list(self.session.docs_by_view('_all_docs', keys=['3', '4', '5']))
+        assert docs[-1] is None
 
