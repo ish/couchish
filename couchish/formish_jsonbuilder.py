@@ -198,7 +198,8 @@ class FormishWidgetRegistry(object):
         show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
         show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
         show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
-        return formish.FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
+        return formish.FileUpload(
+             filestore.CachedTempFilestore(filestore.FileSystemHeaderedFilestore(root_dir=root_dir)),
              url_base=url_base,
              image_thumbnail_default=image_thumbnail_default,
              show_download_link=show_download_link,

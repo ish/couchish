@@ -386,7 +386,8 @@ class WidgetRegistry(FormishWidgetRegistry):
         show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
         show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
         identify_size = widget_spec.get('options',{}).get('identify_size',False)
-        return FileUpload(filestore.CachedTempFilestore(root_dir=root_dir), \
+        return FileUpload(
+             filestore.CachedTempFilestore(filestore.FileSystemHeaderedFilestore(root_dir=root_dir)),
              url_base=url_base,
              image_thumbnail_default=image_thumbnail_default,
              show_download_link=show_download_link,
