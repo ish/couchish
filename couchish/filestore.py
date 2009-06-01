@@ -37,9 +37,9 @@ class CouchDBAttachmentSource(object):
             raise KeyError(key)
         # See if the caller's version is up to date.
         if cache_tag and doc['_rev'] == cache_tag:
-            return (doc['_rev'], None, None)
+            return (doc['_rev'],  [('Content-Type',None)], None)
         # Get the attachment content.
         with self.couchish.session() as S:
             content = S.get_attachment(doc_id, attachment_name)
-        return (doc['_rev'], attachment_stub['content_type'], StringIO(content))
+        return (doc['_rev'], [('Content-Type',attachment_stub['content_type'])], StringIO(content))
 

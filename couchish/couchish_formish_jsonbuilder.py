@@ -3,7 +3,7 @@ from jsonish import pythonjson as json
 from couchish.formish_jsonbuilder import build as formish_build
 from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
 from couchish.formish_jsonbuilder import FormishWidgetRegistry
-from formish import widgets, filestore, safefilename
+from formish import widgets, filestore, safefilename, util
 from PIL import Image
 from schemaish.type import File as SchemaFile
 from dottedish import get_dict_from_dotted_dict
@@ -72,9 +72,9 @@ class FileUpload(formish.FileUpload):
 
         fieldstorage = data.get('file', [''])[0]
         if getattr(fieldstorage,'file',None):
-            filename = '%s-%s'%(uuid.uuid4().hex,fieldstorage.filename)
-            self.filestore.put(filename, fieldstorage.file, fieldstorage.type, uuid.uuid4().hex)
-            data['name'] = [filename]
+            key = uuid.uuid4().hex
+            self.filestore.put(key, fieldstorage.file, uuid.uuid4().hex, [('Content-Type',fieldstorage.type),('Filename',fieldstorage.filename)])
+            data['name'] = [util.encode_file_resource_path('tmp', key)] 
             data['mimetype'] = [fieldstorage.type]
         if self.identify_size is True and fieldstorage != '':
             fieldstorage.file.seek(0)
@@ -94,16 +94,17 @@ class FileUpload(formish.FileUpload):
         elif request_data['name'] == request_data['default']:
             return SchemaFile(None, None, None)
         else:
-            filename = request_data['name'][0]
+            key = util.decode_file_resource_path(request_data['name'][0])[1]
             try:
-                content_type, cache_tag, f = self.filestore.get(filename)
+                cache_tag, headers, f = self.filestore.get(key)
             except KeyError:
                 return None
+            headers = dict(headers)
             if self.identify_size == True:
                 metadata = {'width':request_data['width'][0], 'height': request_data['height'][0]}
             else:
                 metadata = None
-            return SchemaFile(f, filename, content_type, metadata=metadata)
+            return SchemaFile(f, headers['Filename'], headers['Content-Type'],metadata=metadata)
 
 class SelectChoiceCouchDB(widgets.Widget):
 
@@ -379,15 +380,14 @@ class WidgetRegistry(FormishWidgetRegistry):
                 return obj
             else:
                 return None
-        root_dir = widget_spec.get('options',{}).get('root_dir',None)
+        root_dir = widget_spec.get('options',{}).get('root_dir','cache')
         url_base = widget_spec.get('options',{}).get('url_base',None)
         image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
         show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
         show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
         show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
         identify_size = widget_spec.get('options',{}).get('identify_size',False)
-        return FileUpload(
-             filestore.CachedTempFilestore(filestore.FileSystemHeaderedFilestore(root_dir=root_dir)),
+        return FileUpload( filestore.CachedTempFilestore(filestore.FileSystemHeaderedFilestore(root_dir=root_dir)),
              url_base=url_base,
              image_thumbnail_default=image_thumbnail_default,
              show_download_link=show_download_link,

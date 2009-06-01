@@ -46,9 +46,7 @@ def has_unmodified_signature(f):
 
 
 def make_dotted_or_emptydict(d):
-    if isinstance(d, dict):
-        return dotted(d)
-    return dotted({})
+    return dotted(d)
 
 
 
@@ -56,7 +54,7 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
     if isinstance(data, File):
         get_file_from_item(data, original, files, inlinefiles, original_files, get_attr(prefix))
         return
-    if not isinstance(data, dict):
+    if not isinstance(data, dict) and not isinstance(data, list):
         return
     dd = dotted(data)
     ddoriginal = make_dotted_or_emptydict(original)
@@ -113,14 +111,14 @@ def get_files_from_original(data, original, files, inlinefiles, original_files, 
     if isinstance(original, File):
         get_file_from_original(data, original, files, inlinefiles, original_files, get_attr(prefix))
         return
-    if not isinstance(original, dict):
+    if not isinstance(original, dict) and not isinstance(original, list):
         return
     dd = make_dotted_or_emptydict(data)
     ddoriginal = dotted(original)
     for k, of in ddoriginal.dotteditems():
         if isinstance(of, File):
             f = dd.get(k)
-            get_file_from_original(f, of, files, inlinefiles, original_files, get_attr(prefix, kparent))
+            get_file_from_original(f, of, files, inlinefiles, original_files, get_attr(prefix, k))
 
 
 
@@ -155,7 +153,6 @@ def _parse_changes_for_files(session, deletions, additions, changes):
                 all_original_files.setdefault(d['_id'], {}).update(original_files)
                 _extract_inline_attachments(d, inlinefiles)
         changes[n] = (d, cs)
-
 
     return all_original_files, all_separate_files
 
