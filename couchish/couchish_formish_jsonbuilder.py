@@ -51,11 +51,11 @@ UNSET = object()
 
 class FileUpload(formish.FileUpload):
 
-    type="FileUpload"
+    type="ImageFileUpload"
 
-    def __init__(self, filestore, show_file_preview=True, show_download_link=False, show_image_thumbnail=False, url_base=None, \
+    def __init__(self, filestore=filestore, show_file_preview=True, show_download_link=False, show_image_thumbnail=False, url_base=None, \
                  css_class=None, image_thumbnail_default=None, url_ident_factory=None, identify_size=False):
-        formish.FileUpload.__init__(self, filestore, show_file_preview=show_file_preview, show_download_link=show_download_link, \
+        formish.FileUpload.__init__(self, filestore=filestore, show_file_preview=show_file_preview, show_download_link=show_download_link, \
             show_image_thumbnail=show_image_thumbnail, url_base=url_base, css_class=css_class, image_thumbnail_default=image_thumbnail_default, url_ident_factory=url_ident_factory)
         self.identify_size = identify_size
 
@@ -68,6 +68,8 @@ class FileUpload(formish.FileUpload):
         if data.get('remove', [None])[0] is not None:
             data['name'] = ['']
             data['mimetype'] = ['']
+            data['height'] = ['']
+            data['width'] = ['']
             return data
 
         fieldstorage = data.get('file', [''])[0]
@@ -81,6 +83,9 @@ class FileUpload(formish.FileUpload):
             width, height = Image.open(fieldstorage.file).size
             data['width'] = [width]
             data['height'] = [height]
+        else:
+            data['width'] = [None]
+            data['height'] = [None]
         return data
 
     def from_request_data(self, schema_type, request_data):
@@ -380,14 +385,13 @@ class WidgetRegistry(FormishWidgetRegistry):
                 return obj
             else:
                 return None
-        root_dir = widget_spec.get('options',{}).get('root_dir','cache')
         url_base = widget_spec.get('options',{}).get('url_base',None)
         image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
         show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
         show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
         show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
         identify_size = widget_spec.get('options',{}).get('identify_size',False)
-        return FileUpload( filestore.CachedTempFilestore(filestore.FileSystemHeaderedFilestore(root_dir=root_dir)),
+        return FileUpload( filestore=filestore.CachedTempFilestore(),
              url_base=url_base,
              image_thumbnail_default=image_thumbnail_default,
              show_download_link=show_download_link,
