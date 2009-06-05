@@ -12,9 +12,8 @@ class CouchDBAttachmentSource(object):
     Note: the application would be responsible for uploading files.
     """
 
-    def __init__(self, couchish_store, name):
+    def __init__(self, couchish_store):
         self.couchish = couchish_store
-        self.name = name
 
     def get(self, key, cache_tag=None):
         # XXX This would be much better written using httplib2 and performing a
