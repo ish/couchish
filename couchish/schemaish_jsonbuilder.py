@@ -169,11 +169,13 @@ class SchemaishTypeRegistry(object):
         return schemaish.File(**field)
 
     def list_factory(self, field):
+        field = dict(field)
         attr = field.pop('attr')
         attr_type = self.make_schemaish_type(attr)
         return schemaish.Sequence(attr_type, **field)
     
     def tuple_factory(self, field):
+        field = dict(field)
         attr = field.pop('attr')
         attr_types = []
         for a in attr['types']:
