@@ -245,10 +245,9 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
             return ''
 
     def from_request_data(self, schema_type, data):
-        out = []
-        for item in data:
-            out.append(self.full_options[item])
-        return out
+        data = data or []
+        return [self.full_options[item] for item in data]
+
 
 class SeqRefTextArea(formish.Input):
     """
