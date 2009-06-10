@@ -263,7 +263,7 @@ class SeqRefTextArea(formish.Input):
     def __init__(self, db, view, **k):
         self.cols = k.pop('cols', None)
         self.rows = k.pop('rows', None)
-        self.strip = k.pop('strip', True)
+        self.additional_fields = k.pop('additional_fields', [])
         self.db = db
         self.view = view
         formish.Input.__init__(self, **k)
@@ -277,26 +277,28 @@ class SeqRefTextArea(formish.Input):
         """
         if data is None:
             return []
-        string_data = [d['_ref'] for d in data]
-        return string_data
+        additional_fields = ['_ref'] + self.additional_fields
+        return ['|'.join(d.get(attr, '') for attr in additional_fields) for d in data]
 
     def from_request_data(self, schema_type, request_data):
         """
         We're using the converter options to allow processing sequence data
         using the csv module
         """
-        string_data = request_data[0]
-        if self.strip is True:
-            string_data = string_data.strip()
-        if string_data == '':
+        # Extract the list of ids from the content, discarding empty lines.
+        rows = request_data[0].splitlines()
+        rows = (row.strip() for row in rows)
+        rows = (row for row in rows if row)
+        rows = (row.split('|', 1) for row in rows)
+        ids = [row[0] for row in rows]
+        # Return default if nothing entered.
+        if not ids:
             return self.empty
-        ids = [s.strip() for s in string_data.splitlines()]
-        docs = self.db.view(self.view, keys=ids)
-        out = []
-        for d in docs:
-            d.value.update({'_ref': d.key})
-            out.append(d.value)
-        return out
+        # Convert the ids into refs.
+        rows = self.db.view(self.view, keys=ids)
+        for row in rows:
+            row.value.update({'_ref': row.key})
+        return [row.value for row in rows]
 
     def __repr__(self):
         attributes = []
@@ -359,7 +361,8 @@ class WidgetRegistry(FormishWidgetRegistry):
         else:
             refersto = attr.get('refersto')
         view = widget_spec.get('view', refersto)
-        return SeqRefTextArea(self.db, view, **k)
+        additional_fields = widget_spec.get('additional_fields')
+        return SeqRefTextArea(self.db, view, additional_fields=additional_fields, **k)
 
     def checkboxmultichoicetree_couchdbfacet_factory(self, spec, k):
         widgetSpec = spec.get('widget')
