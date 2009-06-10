@@ -387,12 +387,12 @@ class WidgetRegistry(FormishWidgetRegistry):
                 return obj
             else:
                 return None
-        url_base = widget_spec.get('options',{}).get('url_base',None)
+        url_base = widget_spec.get('url_base',None)
         image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
-        show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
-        show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
-        show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
-        identify_size = widget_spec.get('options',{}).get('identify_size',False)
+        show_download_link = widget_spec.get('show_download_link',False)
+        show_file_preview = widget_spec.get('show_file_preview',True)
+        show_image_thumbnail = widget_spec.get('show_image_thumbnail',False)
+        identify_size = widget_spec.get('identify_size',False)
         return FileUpload( filestore=filestore.CachedTempFilestore(),
              url_base=url_base,
              image_thumbnail_default=image_thumbnail_default,
