@@ -192,12 +192,12 @@ class FormishWidgetRegistry(object):
         widget_spec = spec.get('widget')
         if widget_spec is None:
             widget_spec = {}
-        root_dir = widget_spec.get('options',{}).get('root_dir',None)
-        url_base = widget_spec.get('options',{}).get('url_base',None)
+        root_dir = widget_spec.get('root_dir',None)
+        url_base = widget_spec.get('url_base',None)
         image_thumbnail_default = widget_spec.get('image_thumbnail_default','/images/missing-image.jpg')
-        show_download_link = widget_spec.get('options',{}).get('show_download_link',False)
-        show_file_preview = widget_spec.get('options',{}).get('show_file_preview',True)
-        show_image_thumbnail = widget_spec.get('options',{}).get('show_image_thumbnail',False)
+        show_download_link = widget_spec.get('show_download_link',False)
+        show_file_preview = widget_spec.get('show_file_preview',True)
+        show_image_thumbnail = widget_spec.get('show_image_thumbnail',False)
         return formish.FileUpload(
              filestore.CachedTempFilestore(filestore.FileSystemHeaderedFilestore(root_dir=root_dir)),
              url_base=url_base,
