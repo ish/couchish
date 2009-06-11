@@ -222,6 +222,57 @@ def mktree(options):
         root[parent]['children'].append(root[id])
     return root['']
 
+
+class SelectChoiceFacetTreeCouchDB(widgets.Widget):
+    """
+    Select a single category from a facet using a <select> list.
+    """
+
+    template='field.SelectChoice'
+    type = "SelectChoiceFacetTree"
+
+    none_option = ('', '- choose -')
+
+    def __init__(self, options, **k):
+        widgets.Widget.__init__(self, **k)
+        # "Indent" nodes' labels.
+        def indented_label(key, label):
+            return ''.join(['-']*(len(key.split('.'))-1)+[label])
+        self.options = [(key, indented_label(key, value['data']['label']))
+                        for (key, value) in options]
+        # Used to map from chosen item back to category reference.
+        self.options_by_path = dict(options)
+
+    ##
+    # Request data methods.
+
+    def to_request_data(self, schema_type, data):
+        if data is None:
+            return [None]
+        return [data['path']]
+
+    def from_request_data(self, schema_type, data):
+        if data[0] == self.none_option[0]:
+            return None
+        return self.options_by_path[data[0]]
+
+    ##
+    # Methods required by the SelectChoice template
+
+    def get_none_option_value(self, schema_type):
+        return self.none_option[0]
+
+    def get_options(self, schema_type):
+        return self.options
+
+    def selected(self, option, value, schema_type):
+        if value is not None and option[0] == value[0]:
+            return ' selected="selected"'
+        return ''
+
+
+# XXX Rename to include "Facet"
+
 class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
 
     template='field.CheckboxMultiChoiceTreeCouchDB'
@@ -321,6 +372,7 @@ class WidgetRegistry(FormishWidgetRegistry):
         FormishWidgetRegistry.__init__(self)
         self.registry['SeqRefTextArea'] = self.seqreftextarea_factory
         self.registry['SelectChoiceCouchDB'] = self.selectchoice_couchdb_factory
+        self.registry['SelectChoiceFacetTreeCouchDB'] = self.selectchoice_couchdbfacet_factory
         self.registry['CheckboxMultiChoiceTreeCouchDB'] = self.checkboxmultichoicetree_couchdb_factory
         self.registry['CheckboxMultiChoiceTreeCouchDBFacet'] = self.checkboxmultichoicetree_couchdbfacet_factory
         self.defaults['Reference'] = self.selectchoice_couchdb_factory
@@ -363,6 +415,18 @@ class WidgetRegistry(FormishWidgetRegistry):
         view = widget_spec.get('view', refersto)
         additional_fields = widget_spec.get('additional_fields')
         return SeqRefTextArea(self.db, view, additional_fields=additional_fields, **k)
+
+    def selectchoice_couchdbfacet_factory(self, spec, k):
+        widgetSpec = spec.get('widget')
+        def options(db, view):
+            facet = list(db.view(view, include_docs=True))[0].doc
+            options = []
+            for item in facet['category']:
+                options.append( (item['path'],item) )
+            return options
+        view = 'facet_%s/all'%widgetSpec['facet']
+
+        return SelectChoiceFacetTreeCouchDB(options=options(self.db,view), **k)
 
     def checkboxmultichoicetree_couchdbfacet_factory(self, spec, k):
         widgetSpec = spec.get('widget')
