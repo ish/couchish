@@ -137,10 +137,10 @@ class SelectChoiceCouchDB(widgets.Widget):
 
 
     def selected(self, option, value, schemaType):
-        if value == '':
+        if value == ['']:
             v = self.empty
         else:
-            v = value
+            v = value[0]
         if option[0] == v:
             return ' selected="selected"'
         else:
