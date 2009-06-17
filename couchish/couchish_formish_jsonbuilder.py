@@ -6,7 +6,6 @@ from couchish.formish_jsonbuilder import FormishWidgetRegistry
 from formish import widgets, filestore, safefilename, util
 from PIL import Image
 from schemaish.type import File as SchemaFile
-from dottedish import get_dict_from_dotted_dict
 from convertish.convert import string_converter
 
 def get_size(filename):

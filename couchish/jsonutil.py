@@ -82,17 +82,17 @@ def add_id_and_attr_to_files(data):
     if not isinstance(data, dict):
         return data
     dd = dotted(data)
-    for k in dd.dottedkeys():
-        if isinstance(dd[k],File):
+    for k,f in dd.dotteditems():
+        if isinstance(f,File):
             if '_id' in dd and '_rev' in dd:
-                dd[k].doc_id = dd['_id']
-                dd[k].rev = dd['_rev']
+                f.doc_id = dd['_id']
+                f.rev = dd['_rev']
             segments = k.split('.')
             for n in xrange(1,len(segments)):
                 subpath = '.'.join(segments[:-n])
                 if '_id' in dd[subpath] and '_rev' in dd[subpath]:
-                    dd[k].doc_id = dd[subpath]['_id']
-                    dd[k].rev = dd[subpath]['_rev']
+                    f.doc_id = dd[subpath]['_id']
+                    f.rev = dd[subpath]['_rev']
 
     data = dd.data
     return data
