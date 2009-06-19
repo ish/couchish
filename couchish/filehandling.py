@@ -31,7 +31,6 @@ def get_attr(prefix, parent=None):
 
 
 def get_files(data, original=None, prefix=None):
-    print 'in get_files (data, original, prefix)', data, original, prefix
     # scan old data to collect any file refs and then scan new data for file changes
     files = {}
     inlinefiles = {}
@@ -65,18 +64,15 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
         return
     dd = dotted_or_emptydict(data)
     ddoriginal = dotted_or_emptydict(original)
-    print '3 type(dd)',type(dd)
     if not dd:
         return
     for k,f in flatten(dd):
         
-        print '4 Scanning files', k,f, type(f)
         if isinstance(f, File):
             if isinstance(ddoriginal.get(k), File):
                 of = ddoriginal[k]
             else:
                 of = None
-            print 'FOUND FILE on original',of
             get_file_from_item(f, of, files, inlinefiles, original_files, get_attr(prefix, k))
 
 
@@ -124,16 +120,13 @@ def get_file_from_original(f, of, files, inlinefiles, original_files, fullprefix
         original_files[fullprefix] = of
 
 def get_files_from_original(data, original, files, inlinefiles, original_files, prefix):
-    print 'in get_files_from_original'
     if isinstance(original, File):
         get_file_from_original(data, original, files, inlinefiles, original_files, get_attr(prefix))
         return
-    print 'type(origoinal)',type(original)
     if not isinstance(original, dict) and not isinstance(original, list):
         return
     dd = dotted_or_emptydict(data)
     ddoriginal = dotted_or_emptydict(original)
-    print 'about to iteratie on flattened orig'
     if not ddoriginal:
         return
     for k, of in flatten(ddoriginal):
