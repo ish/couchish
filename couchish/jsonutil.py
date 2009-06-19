@@ -1,7 +1,7 @@
 from jsonish import pythonjson
 from schemaish.type import File
 import base64
-from dottedish import dotted
+from dottedish import flatten, dotted
 
 class CouchishFile(File):
 
@@ -82,7 +82,7 @@ def add_id_and_attr_to_files(data):
     if not isinstance(data, dict):
         return data
     dd = dotted(data)
-    for k,f in dd.dotteditems():
+    for k,f in flatten(data):
         if isinstance(f,File):
             if '_id' in dd and '_rev' in dd:
                 f.doc_id = dd['_id']
@@ -94,7 +94,6 @@ def add_id_and_attr_to_files(data):
                     f.doc_id = dd[subpath]['_id']
                     f.rev = dd[subpath]['_rev']
 
-    data = dd.data
     return data
 
 dumps = pythonjson.dumps

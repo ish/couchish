@@ -4,6 +4,7 @@ import yaml
 import webob
 from BeautifulSoup import BeautifulSoup
 import urllib
+from dottedish import flatten
 
 
 DATADIR = 'couchish/tests/data/%s'
@@ -15,7 +16,7 @@ class Test(unittest.TestCase):
         r.method = 'POST'
         r.content_type = 'application/x-www-form-urlencoded'
         kvpairs = [('__formish_form__', 'form')]
-        for k in d.dottedkeys():
+        for k,v in flatten(d):
             lastsegment = k.split('.')[-1]
             try:
                 int(lastsegment)

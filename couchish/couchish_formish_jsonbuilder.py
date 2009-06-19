@@ -58,7 +58,7 @@ class FileUpload(formish.FileUpload):
             show_image_thumbnail=show_image_thumbnail, url_base=url_base, css_class=css_class, image_thumbnail_default=image_thumbnail_default, url_ident_factory=url_ident_factory)
         self.identify_size = identify_size
 
-    def pre_parse_incoming_request_data(self, schema_type, data, full_request_data):
+    def pre_parse_incoming_request_data(self, field, data):
         """
         File uploads are wierd; in out case this means assymetric. We store the
         file in a temporary location and just store an identifier in the field.
@@ -87,7 +87,7 @@ class FileUpload(formish.FileUpload):
             data['height'] = [None]
         return data
 
-    def from_request_data(self, schema_type, request_data):
+    def from_request_data(self, field, request_data):
         """
         Creates a File object if possible
         """
@@ -135,18 +135,18 @@ class SelectChoiceCouchDB(widgets.Widget):
         self.results = None
 
 
-    def selected(self, option, value, schemaType):
-        if value == ['']:
+    def selected(self, option, field):
+        if field.value == ['']:
             v = self.empty
         else:
-            v = value[0]
+            v = field.value[0]
         if option[0] == v:
             return ' selected="selected"'
         else:
             return ''
 
 
-    def to_request_data(self, schema_type, data):
+    def to_request_data(self, field, data):
         """
         Before the widget is rendered, the data is converted to a string
         format.If the data is None then we return an empty string. The sequence
@@ -158,7 +158,7 @@ class SelectChoiceCouchDB(widgets.Widget):
         return [string_data]
 
 
-    def from_request_data(self, schema_type, request_data):
+    def from_request_data(self, field, request_data):
         """
         after the form has been submitted, the request data is converted into
         to the schema type.
@@ -174,7 +174,7 @@ class SelectChoiceCouchDB(widgets.Widget):
         else:
             return {'_ref':string_data, 'data':result}
 
-    def get_none_option_value(self, schema_type):
+    def get_none_option_value(self, field):
         """
         Get the default option (the 'unselected' option)
         """
@@ -183,7 +183,7 @@ class SelectChoiceCouchDB(widgets.Widget):
             return ''
         return none_option
 
-    def get_options(self, schema_type=None):
+    def get_options(self, field=None):
         """
         Return all of the options for the widget
         """
@@ -245,12 +245,12 @@ class SelectChoiceFacetTreeCouchDB(widgets.Widget):
     ##
     # Request data methods.
 
-    def to_request_data(self, schema_type, data):
+    def to_request_data(self, field, data):
         if data is None:
             return [None]
         return [data['path']]
 
-    def from_request_data(self, schema_type, data):
+    def from_request_data(self, field, data):
         if data[0] == self.none_option[0]:
             return None
         return self.options_by_path[data[0]]
@@ -258,14 +258,14 @@ class SelectChoiceFacetTreeCouchDB(widgets.Widget):
     ##
     # Methods required by the SelectChoice template
 
-    def get_none_option_value(self, schema_type):
+    def get_none_option_value(self, field):
         return self.none_option[0]
 
-    def get_options(self, schema_type):
+    def get_options(self, field):
         return self.options
 
-    def selected(self, option, value, schema_type):
-        if value is not None and option[0] == value[0]:
+    def selected(self, option, field):
+        if field.value is not None and option[0] == field.value[0]:
             return ' selected="selected"'
         return ''
 
@@ -283,18 +283,18 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
         self.optiontree = mktree(self.options)
         widgets.Widget.__init__(self,css_class=css_class)
 
-    def to_request_data(self, schema_type, data):
+    def to_request_data(self, field, data):
         if data is None:
             return []
         return [c['path'] for c in data]
 
-    def checked(self, option, values, schema_type):
-        if values is not None and option[0] in values:
+    def checked(self, option, field):
+        if field.value is not None and option[0] in field.value:
             return ' checked="checked"'
         else:
             return ''
 
-    def from_request_data(self, schema_type, data):
+    def from_request_data(self, field, data):
         data = data or []
         return [self.full_options[item] for item in data]
 
@@ -320,7 +320,7 @@ class SeqRefTextArea(formish.Input):
         if not self.converter_options.has_key('delimiter'):
             self.converter_options['delimiter'] = '\n'
 
-    def to_request_data(self, schema_type, data):
+    def to_request_data(self, field, data):
         """
         We're using the converter options to allow processing sequence data
         using the csv module
@@ -330,7 +330,7 @@ class SeqRefTextArea(formish.Input):
         additional_fields = ['_ref'] + self.additional_fields
         return ['|'.join(d.get(attr, '') for attr in additional_fields) for d in data]
 
-    def from_request_data(self, schema_type, request_data):
+    def from_request_data(self, field, request_data):
         """
         We're using the converter options to allow processing sequence data
         using the csv module
