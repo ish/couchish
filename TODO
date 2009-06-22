@@ -1,3 +1,12 @@
+Change the 'type' config in adminish
+------------------------------------
+
+You should be able to specify where the magic 'all' and 'all_count' views come
+from. You should also be able to specify what the map and reduce are. This
+means that the 'type' is now just a marker that allows the system to know which
+view to use for all and all_count views. If the map is not specified for a
+type, an auto 'all' or 'all_count' is generated'. You should be able to pass in
+a key for the auto generated view so that you can set the order of items.
 
 
 Change the Sequence Setup 
