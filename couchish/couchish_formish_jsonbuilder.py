@@ -412,7 +412,7 @@ class WidgetRegistry(FormishWidgetRegistry):
         else:
             refersto = attr.get('refersto')
         view = widget_spec.get('view', refersto)
-        additional_fields = widget_spec.get('additional_fields')
+        additional_fields = widget_spec.get('additional_fields',[])
         return SeqRefTextArea(self.db, view, additional_fields=additional_fields, **k)
 
     def selectchoice_couchdbfacet_factory(self, spec, k):
