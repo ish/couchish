@@ -15,7 +15,7 @@ class Test(unittest.TestCase):
         r = webob.Request.blank('http://localhost/')
         r.method = 'POST'
         r.content_type = 'application/x-www-form-urlencoded'
-        kvpairs = [('__formish_form__', 'form')]
+        kvpairs = []
         for k,v in flatten(d):
             lastsegment = k.split('.')[-1]
             try:
@@ -57,18 +57,18 @@ class Test(unittest.TestCase):
         views_definition = yaml.load( open(DATADIR%'test_couchish_views.yaml').read() )
 
         f = build(author_definition)
-        self.assertIdHasValue(f, 'form-first_name', '')
+        self.assertIdHasValue(f, 'first_name', '')
         # Test None data
         f = build(author_definition)
         testdata = {'first_name': None, 'last_name': None}
         f.defaults = testdata
-        self.assertIdHasValue(f, 'form-first_name', '')
+        self.assertIdHasValue(f, 'first_name', '')
         self.assertRoundTrip(f, testdata)
         # Test sample data
         f = build(author_definition)
         testdata = {'first_name': None, 'last_name': 'Goodall'}
         f.defaults = testdata
-        self.assertIdHasValue(f, 'form-last_name', 'Goodall')
+        self.assertIdHasValue(f, 'last_name', 'Goodall')
         self.assertRoundTrip(f, testdata)
 
     def test_fileupload(self):
