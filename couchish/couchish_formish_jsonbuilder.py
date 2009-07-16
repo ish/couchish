@@ -300,6 +300,38 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
         return [self.full_options[item] for item in data]
 
 
+class RefInput(formish.Input):
+    """
+    Simple text input field for entering a reference to another object.
+    """
+
+    type = "RefInput"
+
+    def __init__(self, db, **k):
+        self.db = db
+        self.additional_fields = k.pop('additional_fields', [])
+        formish.Input.__init__(self, **k)
+
+    def to_request_data(self, field, data):
+        if data is None:
+            return ['']
+        additional_fields = ['_ref'] + self.additional_fields
+        return ['|'.join(data.get(attr, '') for attr in additional_fields)]
+
+    def from_request_data(self, field, request_data):
+        data = request_data[0].strip()
+        # Extract the id from the content.
+        id = data.split('|', 1)[0]
+        # Return default if nothing entered.
+        if not id:
+            return self.empty
+        # Convert the id into a ref and return.
+        row = iter(self.db.view(field.attr.refersto, key=id)).next()
+        ref = row.value
+        ref.update({'_ref': row.key})
+        return ref
+
+
 class SeqRefTextArea(formish.Input):
     """
     Textarea input field
@@ -370,13 +402,13 @@ class WidgetRegistry(FormishWidgetRegistry):
     def __init__(self, db=None):
         self.db = db
         FormishWidgetRegistry.__init__(self)
+        self.registry['RefInput'] = self.refinput_factory
         self.registry['SeqRefTextArea'] = self.seqreftextarea_factory
         self.registry['SelectChoiceCouchDB'] = self.selectchoice_couchdb_factory
         self.registry['SelectChoiceFacetTreeCouchDB'] = self.selectchoice_couchdbfacet_factory
         self.registry['CheckboxMultiChoiceTreeCouchDB'] = self.checkboxmultichoicetree_couchdb_factory
         self.registry['CheckboxMultiChoiceTreeCouchDBFacet'] = self.checkboxmultichoicetree_couchdbfacet_factory
         self.defaults['Reference'] = self.selectchoice_couchdb_factory
-
 
     def selectchoice_couchdb_factory(self, spec, k):
         if spec is None:
@@ -400,6 +432,20 @@ class WidgetRegistry(FormishWidgetRegistry):
             return [(item.id,item.doc['label']) for item in list(db.view(view, include_docs=True))]
         view = widgetSpec['options']
         return formish.CheckboxMultiChoiceTree(options=options(self.db,view), **k)
+
+    def refinput_factory(self, spec, k):
+        if spec is None:
+            spec = {}
+        widget_spec = spec.get('widget')
+        if widget_spec is None:
+            widget_spec = {}
+        attr = spec.get('attr',{}).get('attr',{})
+        if attr is None:
+            refersto = None
+        else:
+            refersto = attr.get('refersto')
+        additional_fields = widget_spec.get('additional_fields',[])
+        return RefInput(self.db, additional_fields=additional_fields, **k)
 
     def seqreftextarea_factory(self, spec, k):
         if spec is None:
