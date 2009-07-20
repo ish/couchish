@@ -65,7 +65,6 @@ class TestFiles(unittest.TestCase):
         with self.S.session() as S:
             matt = S.doc_by_id(matt_id)
         assert len(matt['_attachments']) == 1
-        print matt['_attachments']
         assert matches_supplied(matt['_attachments'][matt['photo'].id], {'stub': True, 'length': 78, 'content_type': 'text/plain'})
 
 
