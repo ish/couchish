@@ -43,7 +43,7 @@ class CouchishStoreSession(object):
               pre_flush_hook=self._pre_flush_hook,
               post_flush_hook=self._post_flush_hook,
               encode_doc=jsonutil.encode_to_dict,
-              decode_doc=jsonutil.decode_from_dict) 
+              decode_doc=lambda d: jsonutil.decode_from_dict(d, self))
         self.file_additions = {}
         self.file_deletions = {}
 
