@@ -128,7 +128,11 @@ class CouchishStoreSession(object):
         """
         Generate the sequence of docs of a given type.
         """
-        return self.docs_by_view('%s/all'%type, **options)
+        config = self.store.config.types[type]
+        view = config.get('metadata', {}).get('views', {}).get('all')
+        if not view:
+            view = '%s/all'%type
+        return self.docs_by_view(view, **options)
 
     def docs_by_view(self, view, **options):
         options['include_docs'] = True
