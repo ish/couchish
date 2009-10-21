@@ -352,3 +352,14 @@ class TestMissingKeys(util.TempDatabaseMixin, unittest.TestCase):
         docs = list(self.session.docs_by_view('_all_docs', keys=['3', '4', '5']))
         assert docs[-1] is None
 
+    def test_docs_by_id_filtered(self):
+        docs = list(self.session.docs_by_id(['3', '4', '5'], remove_rows_with_missing_doc=True))
+        print docs
+        assert len(docs) == 2
+        assert None not in docs
+
+    def test_docs_by_view_filtered(self):
+        docs = list(self.session.docs_by_view('_all_docs', keys=['3', '4', '5'], remove_rows_with_missing_doc=True))
+        assert len(docs) == 2
+        assert None not in docs
+

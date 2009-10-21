@@ -117,14 +117,18 @@ class CouchishStoreSession(object):
             raise errors.TooMany(message)
         return rows[0].doc
 
-    def docs_by_id(self, ids, **options):
+    def docs_by_id(self, ids, remove_rows_with_missing_doc=False, **options):
         """
         Generate the sequence of documents with the given ids.
         """
         options['keys'] = ids
-        return self.docs_by_view('_all_docs', **options)
+        return self.docs_by_view(
+            '_all_docs',
+            remove_rows_with_missing_doc=remove_rows_with_missing_doc,
+            **options)
 
-    def docs_by_type(self, type, **options):
+    def docs_by_type(self, type, remove_rows_with_missing_doc=False,
+                     **options):
         """
         Generate the sequence of docs of a given type.
         """
@@ -132,12 +136,18 @@ class CouchishStoreSession(object):
         view = config.get('metadata', {}).get('views', {}).get('all')
         if not view:
             view = '%s/all'%type
-        return self.docs_by_view(view, **options)
+        return self.docs_by_view(
+            view, remove_rows_with_missing_doc=remove_rows_with_missing_doc,
+            **options)
 
-    def docs_by_view(self, view, **options):
+    def docs_by_view(self, view, remove_rows_with_missing_doc=False,
+                     **options):
         options['include_docs'] = True
         results = self.view(view, **options)
-        return (row.doc for row in results.rows)
+        docs = (row.doc for row in results.rows)
+        if remove_rows_with_missing_doc:
+            docs = (doc for doc in docs if doc is not None)
+        return docs
 
     def view(self, view, **options):
         """
