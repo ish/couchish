@@ -296,7 +296,6 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
             return ''
 
     def from_request_data(self, field, data):
-        data = data or []
         return [self.full_options[item] for item in data]
 
 

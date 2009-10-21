@@ -20,6 +20,9 @@ class Config(object):
         import yaml
         types = dict((name,yaml.load(file(filename)))
                      for (name, filename) in types.iteritems())
+        for name, value in types.items():
+            if not value.get('metadata', {}).get('views', {}).get('all'):
+                value.setdefault('metadata', {}).setdefault('views',{})['all'] = '%s/all'%name
         views = yaml.load(file(views))
         return cls(types, views)
 
