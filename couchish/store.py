@@ -176,6 +176,24 @@ class CouchishStoreSession(object):
         """
         self.session.reset()
 
+    def make_refs(self, view, ref_keys):
+        """
+        Build a mapping of ref_keys to refs, where a ref is a dict containing a
+        '_ref' item and anything else returned as the view's value.
+        """
+        def ref_from_row(row):
+            ref = row.value
+            ref['_ref'] = row.key
+            return ref
+        rows = self.view(view, keys=ref_keys)
+        return dict((row.key, ref_from_row(row)) for row in rows)
+
+    def make_ref(self, view, ref_key):
+        """
+        Build a ref (see make_refs) for the row with the given ref_key.
+        """
+        return make_refs(self, view, [ref_key])[ref_key]
+
     def _post_flush_hook(self, session, deletions, additions, changes):
 
         # Sentinel to indicate we haven't retrieved the ref view data yet.
