@@ -5,6 +5,7 @@ Views we can build:
     * ref and ref reversed views, one pair per relationship
 """
 
+from datetime import datetime
 from couchdb.design import ViewDefinition
 from couchdbsession import a8n, session
 import schemaish.type
@@ -46,6 +47,7 @@ class CouchishStoreSession(object):
               decode_doc=lambda d: jsonutil.decode_from_dict(d, self))
         self.file_additions = {}
         self.file_deletions = {}
+        self._flush_timestamp = None
 
     def __enter__(self):
         """
@@ -156,7 +158,20 @@ class CouchishStoreSession(object):
         return self.session.view(view, **options)
 
     def _pre_flush_hook(self, session, deletions, additions, changes):
-        file_deletions, file_additions = filehandling._parse_changes_for_files(session, deletions, additions, changes)
+        # We're iterating the sequences multiple time so we might as well just
+        # turn them into lists and be done with it.
+        deletions, additions, changes = \
+                list(deletions), list(additions), list(changes)
+        # Record ctime and mtime for addited and updated documents.
+        for doc in additions:
+            metadata = doc.setdefault('metadata', {})
+            metadata['ctime'] = metadata['mtime'] = self._flush_timestamp
+        for doc, _ in changes:
+            metadata = doc.setdefault('metadata', {})
+            metadata['mtime'] = self._flush_timestamp
+        # Record any files that need storing.
+        file_deletions, file_additions = filehandling._parse_changes_for_files(
+            session, deletions, additions, changes)
         self.file_deletions.update(file_deletions)
         self.file_additions.update(file_additions)
 
@@ -164,6 +179,8 @@ class CouchishStoreSession(object):
         """
         Flush the session.
         """
+        # Record the timestamp of the flush, used for all timestamps during the save.
+        self._flush_timestamp = datetime.utcnow().isoformat()
         returnvalue =  self.session.flush()
         filehandling._handle_separate_attachments(self.session, self.file_deletions, self.file_additions)
         self.file_additions = {}

@@ -1,6 +1,7 @@
 from __future__ import with_statement
-import unittest
 import os.path
+import time
+import unittest
 import couchdb
 from couchish import config, errors, store
 from couchish.tests import util
@@ -15,10 +16,15 @@ def type_filename(type,namespace=None):
 
 db_name = 'test-couchish'
 
-def strip_id_rev(doc):
+def strip_id_rev_meta(doc):
     couchdoc = dict(doc)
     couchdoc.pop('_id')
     couchdoc.pop('_rev')
+    # Clean up the metadata.
+    del couchdoc['metadata']['ctime']
+    del couchdoc['metadata']['mtime']
+    if not couchdoc['metadata']:
+        del couchdoc['metadata']
     return couchdoc
 
 
@@ -61,6 +67,67 @@ class TestStore(util.TempDatabaseMixin, unittest.TestCase):
         assert self.db.get('foo') is None
 
 
+class TestMetadata(util.TempDatabaseMixin, unittest.TestCase):
+
+    def setUp(self):
+        super(TestMetadata, self).setUp()
+        self.store = store.CouchishStore(self.db, config.Config({}, {}))
+
+    def test_create(self):
+        S = self.store.session()
+        doc_id = S.create({})
+        S.flush()
+        doc = self.db.get(doc_id)
+        assert doc['metadata']['ctime']
+        assert doc['metadata']['mtime']
+        assert doc['metadata']['ctime'] == doc['metadata']['mtime']
+
+    def test_create2(self):
+        S = self.store.session()
+        doc1_id = S.create({})
+        time.sleep(.5)
+        doc2_id = S.create({})
+        S.flush()
+        doc1 = self.db.get(doc1_id)
+        doc2 = self.db.get(doc2_id)
+        assert doc1['metadata']['ctime'] == doc1['metadata']['ctime']
+
+    def test_update(self):
+        S = self.store.session()
+        doc_id = S.create({'model_type': 'test'})
+        S.flush()
+        doc = S.doc_by_id(doc_id)
+        doc['foo'] = ['bar']
+        S.flush()
+        doc = self.db.get(doc_id)
+        assert doc['metadata']['ctime']
+        assert doc['metadata']['mtime']
+        assert doc['metadata']['mtime'] > doc['metadata']['ctime']
+
+    def test_graceful_upgrade(self):
+        doc_id = self.db.create({'model_type': 'foo'})
+        S = self.store.session()
+        doc = S.doc_by_id(doc_id)
+        doc['foo'] = 'bar'
+        S.flush()
+        assert 'ctime' not in doc['metadata']
+        assert doc['metadata']['mtime']
+
+    def test_non_destructive(self):
+        S = self.store.session()
+        docid = S.create({'model_type': 'test', 'metadata': {'schema_version': '1.1'}})
+        S.flush()
+        doc = S.doc_by_id(docid)
+        assert doc['metadata']['ctime']
+        assert doc['metadata']['mtime']
+        assert doc['metadata']['schema_version'] == '1.1'
+        doc['foo'] = 'bar'
+        S.flush()
+        assert doc['metadata']['ctime']
+        assert doc['metadata']['mtime']
+        assert doc['metadata']['schema_version'] == '1.1'
+
+
 class Test(unittest.TestCase):
 
     def setUp(self):
@@ -92,8 +159,8 @@ class Test(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title',
                             'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'},
@@ -116,8 +183,8 @@ class Test(unittest.TestCase):
         matt['last_name'] = {'firstpart':'Woo','lastpart':'dall'}
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': {'firstpart':'Woo','lastpart':'dall'}}
         assert book == {'model_type': 'book', 'title': 'Title',
                  'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': {'firstpart':'Woo','lastpart':'dall'}},
@@ -138,8 +205,8 @@ class Test(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title',
                             'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'},
@@ -180,8 +247,8 @@ class TestDeep(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'metadata': {
                             'writtenby': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'},
@@ -253,8 +320,8 @@ class TestRefsInSequences(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'authors': [ {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}, {'_ref': tim_id, 'last_name': 'Parkin'}]}
 
@@ -290,8 +357,8 @@ class TestNestedRefsInSequences(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'authors': [ {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}, {'nested': {'_ref': tim_id, 'last_name': 'Parkin'}}]}
 
@@ -310,8 +377,8 @@ class TestNestedRefsInSequences(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'authors': [ {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}, {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}]}
 
@@ -346,8 +413,8 @@ class TestNestedRefsInNestedSequences(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'people': [{'authors': [ {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}, {'nested': {'_ref': tim_id, 'last_name': 'Parkin'}}]}]}
 
@@ -366,8 +433,8 @@ class TestNestedRefsInNestedSequences(unittest.TestCase):
         matt['last_name'] = 'Woodall'
         sess.flush()
 
-        matt = strip_id_rev(self.db[matt_id])
-        book = strip_id_rev(self.db[book_id])
+        matt = strip_id_rev_meta(self.db[matt_id])
+        book = strip_id_rev_meta(self.db[book_id])
         assert matt == {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Woodall'}
         assert book == {'model_type': 'book', 'title': 'Title', 'people': [{'authors': [ {'nested': {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Woodall'}}, {'nested': {'_ref': matt_id, 'first_name':'Matt','last_name': 'Woodall'}}]}]}
 

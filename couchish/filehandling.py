@@ -138,9 +138,6 @@ def get_files_from_original(data, original, files, inlinefiles, original_files, 
 
 def _parse_changes_for_files(session, deletions, additions, changes):
     """ returns deletions, additions """
-    additions = list(additions)
-    changes = list(changes)
-    deletions = list(deletions)
     all_separate_files = {}
     all_inline_files = {}
     for addition in additions:
