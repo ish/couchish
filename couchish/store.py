@@ -209,7 +209,7 @@ class CouchishStoreSession(object):
         """
         Build a ref (see make_refs) for the row with the given ref_key.
         """
-        return make_refs(self, view, [ref_key])[ref_key]
+        return self.make_refs(view, [ref_key])[ref_key]
 
     def _post_flush_hook(self, session, deletions, additions, changes):
 

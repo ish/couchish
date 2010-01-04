@@ -141,6 +141,18 @@ class Test(unittest.TestCase):
             ))
         self.S.sync_views()
 
+    def test_make_refs(self):
+        sess = self.S.session()
+        matt = {'model_type': 'author', 'first_name': 'Matt', 'last_name': 'Goodall'}
+        matt_id = sess.create(matt)
+        tim = {'model_type': 'author', 'first_name': 'Tim', 'last_name': 'Parkin'}
+        tim_id = sess.create(tim)
+        sess.flush()
+        refs = sess.make_refs('customdes/author_name', [matt_id, tim_id])
+        assert refs == {matt_id: {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Goodall'},
+                        tim_id: {'_ref': tim_id, 'first_name': 'Tim', 'last_name': 'Parkin'}}
+        ref = sess.make_ref('customdes/author_name', matt_id)
+        assert ref == {'_ref': matt_id, 'first_name': 'Matt', 'last_name': 'Goodall'}
 
     def test_simple_reference(self):
         sess = self.S.session()
