@@ -212,14 +212,18 @@ def get_parent(segments):
         return '.'.join(segments[:-1])
 
 def mktree(options):
+    _options = list(options)
+    _options.sort(lambda x, y: cmp(len(x[0].split('.')), len(y[0].split('.'))))
     last_segments_len = 1
     root = {'': {'data':('root', 'Root'), 'children':[]} }
-    for id, label in options:
+    for id, label in _options:
         segments = id.split('.')
         parent = get_parent(segments)
         root[id] = {'data': (id, label), 'children':[]}
         root[parent]['children'].append(root[id])
     return root['']
+
+
 
 
 class SelectChoiceFacetTreeCouchDB(widgets.Widget):
