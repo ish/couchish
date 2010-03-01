@@ -15,9 +15,11 @@ from couchish import filehandling, errors, jsonutil
 
 class CouchishStore(object):
 
-    def __init__(self, db, config):
+    def __init__(self, db, config, pre_flush_hook=None, post_flush_hook=None):
         self.db = db
         self.config = config
+        self.pre_flush_hook = pre_flush_hook
+        self.post_flush_hook = post_flush_hook
 
     def sync_views(self):
         for url, view in self.config.viewdata['views'].items():
@@ -162,6 +164,8 @@ class CouchishStoreSession(object):
         # turn them into lists and be done with it.
         deletions, additions, changes = \
                 list(deletions), list(additions), list(changes)
+        if self.store.pre_flush_hook is not None:
+            self.store.pre_flush_hook(deletions, additions, changes)
         # Record ctime and mtime for addited and updated documents.
         for doc in additions:
             metadata = doc.setdefault('metadata', {})
@@ -212,6 +216,8 @@ class CouchishStoreSession(object):
         return self.make_refs(view, [ref_key])[ref_key]
 
     def _post_flush_hook(self, session, deletions, additions, changes):
+        if self.store.post_flush_hook is not None:
+            self.store.post_flush_hook(deletions, additions, changes)
 
         # Sentinel to indicate we haven't retrieved the ref view data yet.
         NO_REF_DATA = object()
