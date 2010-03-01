@@ -91,7 +91,10 @@ class FormishWidgetRegistry(object):
         Specification attributes:
             None
         """
-        return formish.TextArea(**k)
+        widget_spec = dict(spec['widget'])
+        widget_spec.pop('type')
+        widget_spec.update(k)
+        return formish.TextArea(**widget_spec)
 
 
     def selectchoice_factory(self, spec, k):
