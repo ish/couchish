@@ -23,7 +23,7 @@ def get_size(filename):
 
 
 
-class Reference(schemaish.attr.Attribute):
+class Reference(schemaish.attr.LeafAttribute):
     """ a generic reference
     """
     type = "Reference"
