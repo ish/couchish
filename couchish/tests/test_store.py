@@ -472,7 +472,6 @@ class TestMissingKeys(util.TempDatabaseMixin, unittest.TestCase):
 
     def test_docs_by_id_filtered(self):
         docs = list(self.session.docs_by_id(['3', '4', '5'], remove_rows_with_missing_doc=True))
-        print docs
         assert len(docs) == 2
         assert None not in docs
 
