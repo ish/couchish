@@ -1,8 +1,0 @@
-PyYAML
-couchdb-session
-dottedish
-jsonish
-schemaish
-
-[formish]
-formish
