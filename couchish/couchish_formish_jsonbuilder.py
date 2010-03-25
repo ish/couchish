@@ -280,7 +280,6 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
 
     template='field.CheckboxMultiChoiceTreeCouchDB'
     type = "CheckboxMultiChoiceTree"
-    default_value = []
 
     def __init__(self, full_options, css_class=None):
         self.options = [ (key, value['data']['label']) for key, value in full_options]
