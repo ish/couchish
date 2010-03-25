@@ -282,10 +282,9 @@ class CheckboxMultiChoiceTreeCouchDB(formish.CheckboxMultiChoiceTree):
     type = "CheckboxMultiChoiceTree"
 
     def __init__(self, full_options, css_class=None):
-        self.options = [ (key, value['data']['label']) for key, value in full_options]
+        options = [(key, value['data']['label']) for key, value in full_options]
+        formish.CheckboxMultiChoiceTree.__init__(self, options, css_class=css_class)
         self.full_options = dict(full_options)
-        self.optiontree = mktree(self.options)
-        widgets.Widget.__init__(self,css_class=css_class)
 
     def to_request_data(self, field, data):
         if data is None:
