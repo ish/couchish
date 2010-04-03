@@ -1,7 +1,7 @@
 import schemaish, formish, subprocess, uuid, os
 from jsonish import pythonjson as json
 from couchish.formish_jsonbuilder import build as formish_build
-from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry
+from couchish.schemaish_jsonbuilder import SchemaishTypeRegistry, attr_kwargs
 from couchish.formish_jsonbuilder import FormishWidgetRegistry
 from formish import widgets, filestore, safefilename, util
 from PIL import Image
@@ -22,28 +22,25 @@ def get_size(filename):
     return width, height
 
 
-
 class Reference(schemaish.attr.Attribute):
     """ a generic reference
     """
     type = "Reference"
 
-    def __init__(self, **k):
-        self.refersto = k['attr']['refersto']
+    def __init__(self, refersto, **k):
+        self.refersto = refersto
         #self.uses = k['attr']['uses']
         schemaish.attr.Attribute.__init__(self,**k)
         
 
-
 class TypeRegistry(SchemaishTypeRegistry):
-
 
     def __init__(self):
         SchemaishTypeRegistry.__init__(self)
         self.registry['Reference'] = self.reference_factory
 
     def reference_factory(self, field):
-        return Reference(**field)
+        return Reference(field['attr']['refersto'], **attr_kwargs(field))
 
 
 UNSET = object()

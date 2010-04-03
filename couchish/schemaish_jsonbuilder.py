@@ -135,44 +135,42 @@ class SchemaishTypeRegistry(object):
                 }
         self.default_type = 'String'
 
-
     def make_schemaish_type(self, field):
         field_type = field.get('type',self.default_type)
         return self.registry[field_type](field)
 
-
     def string_factory(self, field):
-        return schemaish.String(**field)
+        return schemaish.String(**attr_kwargs(field))
 
     def integer_factory(self, field):
-        return schemaish.Integer(**field)
+        return schemaish.Integer(**attr_kwargs(field))
 
     def float_factory(self, field):
-        return schemaish.Float(**field)
+        return schemaish.Float(**attr_kwargs(field))
 
     def boolean_factory(self, field):
-        return schemaish.Boolean(**field)
+        return schemaish.Boolean(**attr_kwargs(field))
 
     def decimal_factory(self, field):
-        return schemaish.Decimal(**field)
+        return schemaish.Decimal(**attr_kwargs(field))
 
     def date_factory(self, field):
-        return schemaish.Date(**field)
+        return schemaish.Date(**attr_kwargs(field))
 
     def time_factory(self, field):
-        return schemaish.Time(**field)
+        return schemaish.Time(**attr_kwargs(field))
 
     def datetime_factory(self, field):
-        return schemaish.DateTime(**field)
+        return schemaish.DateTime(**attr_kwargs(field))
 
     def file_factory(self, field):
-        return schemaish.File(**field)
+        return schemaish.File(**attr_kwargs(field))
 
     def list_factory(self, field):
         field = dict(field)
         attr = field.pop('attr')
         attr_type = self.make_schemaish_type(attr)
-        return schemaish.Sequence(attr_type, **field)
+        return schemaish.Sequence(attr_type, **attr_kwargs(field))
     
     def tuple_factory(self, field):
         field = dict(field)
@@ -180,12 +178,23 @@ class SchemaishTypeRegistry(object):
         attr_types = []
         for a in attr['types']:
             attr_types.append(self.make_schemaish_type(a))
-        return schemaish.Tuple(attr_types, **field)
+        return schemaish.Tuple(attr_types, **attr_kwargs(field))
 
     def structure_factory(self, field):
-        return schemaish.Structure(**field)
+        return schemaish.Structure(**attr_kwargs(field))
+
 
 schemaish_type_registry=SchemaishTypeRegistry()
+
+
+SCHEMAISH_ATTRIBUTE_KWARGS = ['default', 'description', 'title', 'validator']
+def attr_kwargs(field):
+    """
+    Return the schemaish.Attribute kwargs from the field definition.
+    """
+    return dict((k,v) for (k,v) in field.iteritems()
+                if k in SCHEMAISH_ATTRIBUTE_KWARGS)
+
 
 def expand_definition(pre_expand_definition):
     definition = []
@@ -233,8 +242,4 @@ def build(definition, type_registry=schemaish_type_registry):
         schema_pointer_hash[fullkey] = get_nested_attr(schema_type)
             
     return schema
-        
-        
-
-        
 
