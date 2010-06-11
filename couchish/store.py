@@ -219,7 +219,7 @@ class CouchishStoreSession(object):
         # XXX generators are being re-used so need to turn them into lists
         deletions, additions = list(deletions), list(additions)
         changes = [(doc, list(actions)) for (doc, actions) in changes]
-            
+
         if self.store.post_flush_hook is not None:
             self.store.post_flush_hook(deletions, additions, changes)
 
