@@ -58,7 +58,7 @@ class TestFiles(unittest.TestCase):
         first_created_photo_id = matt['photo'].id
         sess = self.S.session()
         attachment = sess.session._db.get_attachment(matt_id, first_created_photo_id)
-        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+        assert attachment.read() == 'this is a test for the file attachment processing test in test_couchish_store\n'
         assert hasattr(matt['photo'],'id')
 
         # get the doc back out using couchish and check it's OK
@@ -82,7 +82,7 @@ class TestFiles(unittest.TestCase):
         first_created_photo_id = matt['photo'].id
         sess = self.S.session()
         attachment = sess.session._db.get_attachment(matt_id, first_created_photo_id)
-        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+        assert attachment.read() == 'this is a test for the file attachment processing test in test_couchish_store\n'
         assert hasattr(matt['photo'],'id')
 
         # get the doc back out using couchish and check it's OK
@@ -104,7 +104,7 @@ class TestFiles(unittest.TestCase):
         sess = self.S.session()
         attachment = 'foo'
         attachment = sess.session._db.get_attachment(matt_id,new_photo_id)
-        assert attachment == 'and now it\'s changed\n'
+        assert attachment.read() == 'and now it\'s changed\n'
         assert new_photo_id == first_created_photo_id
         
         with self.S.session() as S:
@@ -127,7 +127,7 @@ class TestFiles(unittest.TestCase):
         first_created_photo_id = matt['photo'].id
         sess = self.S.session()
         attachment = sess.session._db.get_attachment(matt_id, first_created_photo_id)
-        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+        assert attachment.read() == 'this is a test for the file attachment processing test in test_couchish_store\n'
         assert hasattr(matt['photo'],'id')
 
         # get the doc back out using couchish and check it's OK
@@ -159,7 +159,7 @@ class TestFiles(unittest.TestCase):
         first_created_photo_id = matt['photo'][0].id
         sess = self.S.session()
         attachment = sess.session._db.get_attachment(matt_id, first_created_photo_id)
-        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+        assert attachment.read() == 'this is a test for the file attachment processing test in test_couchish_store\n'
         assert  hasattr(matt['photo'][0],'id')
     
         fh2 = open('couchish/tests/data/files/test-changed.txt','r')
@@ -199,7 +199,7 @@ class TestFiles(unittest.TestCase):
         first_created_photo_id = matt['photo'].id
         sess = self.S.session()
         attachment = sess.session._db.get_attachment(matt_id, first_created_photo_id)
-        assert attachment == 'this is a test for the file attachment processing test in test_couchish_store\n'
+        assert attachment.read() == 'this is a test for the file attachment processing test in test_couchish_store\n'
         assert hasattr(matt['photo'],'id')
 
         # get the doc back out using couchish and check it's OK

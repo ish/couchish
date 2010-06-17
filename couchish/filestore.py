@@ -40,5 +40,4 @@ class CouchDBAttachmentSource(object):
         # Get the attachment content.
         with self.couchish.session() as S:
             content = S.get_attachment(doc_id, attachment_name)
-        return (doc['_rev'], [('Content-Type',attachment_stub['content_type'])], StringIO(content))
-
+        return (doc['_rev'], [('Content-Type',attachment_stub['content_type'])], content)

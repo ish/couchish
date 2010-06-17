@@ -21,6 +21,7 @@ A couch wrapper that includes reference info updating, serialisation of complex 
       install_requires=[
           # -*- Extra requirements: -*-
           "PyYAML",
+          "couchdb>=0.7",
           "couchdb-session",
           "dottedish",
           "jsonish",
