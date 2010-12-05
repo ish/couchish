@@ -41,9 +41,12 @@ class AttachmentFileLike(object):
 
     def read(self, *a, **k):
         if self._file is None:
-            data = self.session.get_attachment(self.doc_id, self.filename)
-            self._file = StringIO(data)
+            self._file = self.session.get_attachment(self.doc_id, self.filename)
         return self._file.read(*a, **k)
+
+    def close(self):
+        if self._file:
+            self._file.close()
 
     def __getstate__(self):
         # Unpicklable
