@@ -61,6 +61,9 @@ def file_to_dict(obj):
         d['metadata'] = obj.metadata
     if hasattr(obj,'doc_id') and obj.doc_id is not None:
         d['doc_id'] = obj.doc_id
+    elif 'old_name' in d.get('metadata', {}) and not d['id']:
+        # if there is no doc and attachement id check for old ones in the metadata
+        d['doc_id'], _, d['id'] = d['metadata']['old_name'][0].partition('/')
     if hasattr(obj, 'inline') and obj.inline is not False:
         d['inline'] = obj.inline
     # Read the file into the dict, but not if it's an AttachmentFileLike that
