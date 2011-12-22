@@ -66,14 +66,26 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
     ddoriginal = dotted_or_emptydict(original)
     if not dd:
         return
+    file_names = {}
+    for d in ddoriginal:
+        for k in d:
+            if isinstance(d.get(k), File):
+                file_names[couch_attachement_to_full_id(d[k])] = d[k]
     for k,f in flatten(dd):
         
         if isinstance(f, File):
-            if isinstance(ddoriginal.get(k), File):
+            name = couch_attachement_to_full_id(f)
+            if name in file_names:
+                of = file_names[name]
+            elif isinstance(ddoriginal.get(k), File):
                 of = ddoriginal[k]
             else:
                 of = None
             get_file_from_item(f, of, files, inlinefiles, original_files, get_attr(prefix, k))
+
+
+def couch_attachement_to_full_id(attach):
+    return "%s/%s"%(attach.doc_id, attach.id)
 
 
 api.wrap.when_type(a8n.List)(dottedlist.wrap_list)
@@ -147,8 +159,8 @@ def _parse_changes_for_files(session, deletions, additions, changes):
         if inlinefiles:
             all_inline_files.setdefault(addition['_id'],{}).update(inlinefiles)
         _extract_inline_attachments(addition, inlinefiles)
-
-    all_original_files = {}
+    
+    deleted_files = {}
     changes = list(changes)
     for n, changeset in enumerate(changes):
         d, cs = changeset
@@ -161,11 +173,23 @@ def _parse_changes_for_files(session, deletions, additions, changes):
                     all_separate_files.setdefault(d['_id'],{}).update(files)
                 if inlinefiles:
                     all_inline_files.setdefault(d['_id'],{}).update(inlinefiles)
-                all_original_files.setdefault(d['_id'], {}).update(original_files)
+                final_file_ids = set(find_all_file_names(c['value']))
+                removed_files = dict((k, original_files[k]) for k in original_files if couch_attachement_to_full_id(original_files[k]) not in final_file_ids)
+                deleted_files.setdefault(d['_id'], {}).update(removed_files)
                 _extract_inline_attachments(d, inlinefiles)
         changes[n] = (d, cs)
 
-    return all_original_files, all_separate_files
+    return deleted_files, all_separate_files
+
+
+def find_all_file_names(src):
+    if isinstance(src, File):
+        yield couch_attachement_to_full_id(src)
+    elif isinstance(src, dict) or isinstance(src, list):
+        dd = dotted_or_emptydict(src)
+        for _, item in flatten(dd):
+            if isinstance(item, File):
+                yield couch_attachement_to_full_id(item)
 
 
 def _extract_inline_attachments(doc, files):
