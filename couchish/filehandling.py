@@ -67,10 +67,9 @@ def get_files_from_data(data, original, files, inlinefiles, original_files, pref
     if not dd:
         return
     file_names = {}
-    for d in ddoriginal:
-        for k in d:
-            if isinstance(d.get(k), File):
-                file_names[couch_attachement_to_full_id(d[k])] = d[k]
+    for _, d in flatten(ddoriginal):
+        if isinstance(d, File):
+            file_names[couch_attachement_to_full_id(d)] = d
     for k,f in flatten(dd):
         
         if isinstance(f, File):
